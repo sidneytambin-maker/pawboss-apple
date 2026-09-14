@@ -131,7 +131,7 @@ struct ReportsView: View {
                             .foregroundStyle(Color.pawGreen).symbol(.circle)
                             .accessibilityLabel("Business day \(report.day + 1)")
                             .accessibilityValue(spoken(report))
-                    }.frame(height: store.isWatch ? 130 : 220).accessibilityLabel("\(metric) trend").accessibilityValue(summary(reports))
+                    }.frame(height: store.isWatch ? 130 : 220).accessibilityLabel("\(metric) trend").accessibilityValue(summary(reports)).accessibilityIdentifier("businessTrend")
                     Section("Report Values") {
                         ValueRow(title: "Care revenue", value: money(reports.reduce(0) { $0 + $1.revenue }))
                         ValueRow(title: "Operating costs and refunds", value: money(reports.reduce(0) { $0 + $1.expenses }))

@@ -55,6 +55,31 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Continue"].isEnabled)
     }
+    func testDogCareIsSavedAcrossRelaunch() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--reset-test-game", "--seed-care-business"]
+        app.launch()
+        app.tabBars.buttons["Dogs"].tap()
+        let dog = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "dog-row-")).firstMatch
+        XCTAssertTrue(dog.waitForExistence(timeout: 10)); dog.tap()
+        XCTAssertTrue(app.buttons["Check In"].waitForExistence(timeout: 5)); app.buttons["Check In"].tap()
+        XCTAssertTrue(app.buttons["Check Out"].waitForExistence(timeout: 5))
+        screenshot("dog-care-record", app: app)
+        app.terminate(); app.launchArguments = ["--ui-testing"]; app.launch()
+        XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 10)); app.buttons["Continue"].tap()
+        app.tabBars.buttons["Dogs"].tap(); dog.tap()
+        XCTAssertTrue(app.buttons["Check Out"].waitForExistence(timeout: 5))
+    }
+    func testReportsContainChartAndSemanticValues() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--reset-test-game", "--seed-care-business"]
+        app.launch(); app.tabBars.buttons["More"].tap(); app.buttons["Reports"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["businessTrend"].waitForExistence(timeout: 10))
+        screenshot("business-reports", app: app)
+        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .trait])
+        app.swipeUp()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Care revenue.")).firstMatch.exists)
+    }
     func testDarkAppearanceAndAudioSettings() throws {
         let app = launch(seed: true)
         app.tabBars.buttons["More"].tap()

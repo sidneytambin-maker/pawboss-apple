@@ -3,6 +3,7 @@ import PawBossCore
 
 struct DogsView: View {
     @EnvironmentObject private var store: BusinessStore
+    @Environment(\.dynamicTypeSize) private var textSize
     @State private var search = ""
     @State private var filter = "All Dogs"
     var body: some View {
@@ -17,14 +18,17 @@ struct DogsView: View {
                 ForEach(dogs) { dog in
                     NavigationLink(value: Destination.dog(dog.id)) {
                         HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: "dog.fill").font(.title2).foregroundStyle(Color.pawGreen).frame(width: 34).accessibilityHidden(true)
+                            if !textSize.isAccessibilitySize {
+                                Image(systemName: "dog.fill").font(.title2).foregroundStyle(Color.pawGreen).frame(width: 34).accessibilityHidden(true)
+                            }
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(dog.name).font(.headline)
-                                Text(dog.breed).font(.subheadline).foregroundStyle(.secondary)
+                                Text(dog.breed).font(.subheadline).foregroundStyle(.primary)
                                 Label(dog.wellbeing, systemImage: dog.welfare < 60 ? "exclamationmark.circle" : "heart.fill").font(.caption.weight(.medium)).foregroundStyle(dog.welfare < 60 ? Color.pawCoral : Color.pawGreen)
                             }
                         }.padding(.vertical, 7)
                     }.accessibilityElement(children: .ignore).accessibilityLabel(dog.summary)
+                        .accessibilityIdentifier("dog-row-\(dog.id.uuidString)")
                         .accessibilityActions {
                             if dog.present {
                                 Button("Check Out") { store.send(.checkOut(dog.id)) }
@@ -81,7 +85,7 @@ struct DogDetailView: View {
                     Section("Medication") {
                         ForEach(dog.medications) { med in
                             ValueRow(title: med.name, value: "\(med.instructions) \(med.givenDays.contains(state.day) ? "Recorded today." : "Not yet recorded today.")")
-                            if dog.present && !med.givenDays.contains(state.day) {
+                            if dog.present && med.dueDay <= state.day && !med.givenDays.contains(state.day) {
                                 Act(title: "Record Medication Given", icon: "pills", action: .medication(id, med.id), confirmation: "Record the scheduled medication as given according to this dog's care plan?")
                             }
                         }

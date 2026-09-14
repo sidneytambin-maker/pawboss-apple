@@ -22,4 +22,4 @@ jobs:
           name: PawBoss-Apple-validation
           path: Artifacts/
           if-no-files-found: warn
-          retention-days: 3
+          retention-days: 1

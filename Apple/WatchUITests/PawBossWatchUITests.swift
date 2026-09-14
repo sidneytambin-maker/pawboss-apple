@@ -26,4 +26,15 @@ final class PawBossWatchUITests: XCTestCase {
         app.buttons["Enquiries and Quotes"].tap()
         XCTAssertTrue(app.switches["Include handled enquiries"].waitForExistence(timeout: 5))
     }
+    func testDogCareActionsAreAvailableOnWatch() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--reset-test-game", "--seed-care-business"]
+        app.launch(); app.buttons["Menu"].tap(); app.buttons["Dogs"].tap()
+        let dog = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "dog-row-")).firstMatch
+        XCTAssertTrue(dog.waitForExistence(timeout: 10)); dog.tap()
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["Check In"].waitForExistence(timeout: 5))
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "watch-dog-care"; attachment.lifetime = .keepAlways; add(attachment)
+    }
 }

@@ -117,9 +117,11 @@ public struct GameEngine {
             guard state.licence.registered else { throw GameError.invalid("Register the business first.") }
             guard !state.licence.applied || (!state.licenceValid && state.licence.validUntilDay != nil) else { throw GameError.invalid("Your licence application is already on record. Book an inspection next.") }
             try spend(catalog.economy.licence, "Day care licence application")
+            state.licence.validUntilDay = nil
             state.licence.applied = true; return "Licence application submitted. You can now book an inspection."
         case .requestInspection:
             guard state.licence.applied else { throw GameError.invalid("Apply for a licence before booking an inspection.") }
+            guard state.licence.validUntilDay == nil || state.licenceValid else { throw GameError.invalid("Your previous licence has expired. Submit a renewal application before booking the inspection.") }
             guard state.licence.inspectionDay == nil else { throw GameError.invalid("Your inspection is already booked.") }
             try spend(catalog.economy.inspection, "Council inspection booking")
             state.licence.inspectionDay = state.day + 2; return "Inspection booked in two business days. Check your readiness before then."

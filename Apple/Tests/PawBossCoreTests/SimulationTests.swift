@@ -55,6 +55,27 @@ final class SimulationTests: XCTestCase {
         let cash = engine.state.cash
         XCTAssertFalse(engine.perform(.register).applied); XCTAssertEqual(engine.state.cash, cash)
     }
+    func testLicenceRenewalCannotChargeTheApplicationTwice() throws {
+        var engine = try ready()
+        engine.state.day = try XCTUnwrap(engine.state.licence.validUntilDay) + 1
+        engine.state.isOpen = false
+        let before = engine.state.cash
+        apply(.applyLicence, to: &engine)
+        XCTAssertEqual(engine.state.cash, before - engine.catalog.economy.licence)
+        XCTAssertNil(engine.state.licence.validUntilDay)
+        XCTAssertFalse(engine.perform(.applyLicence).applied)
+        XCTAssertEqual(engine.state.cash, before - engine.catalog.economy.licence)
+        apply(.requestInspection, to: &engine)
+    }
+    func testExpiredLicenceNeedsRenewalBeforeInspection() throws {
+        var engine = try ready()
+        engine.state.day = try XCTUnwrap(engine.state.licence.validUntilDay) + 1
+        engine.state.isOpen = false
+        let before = engine.state.cash
+        XCTAssertFalse(engine.perform(.requestInspection).applied)
+        XCTAssertEqual(engine.state.cash, before)
+        XCTAssertNil(engine.state.licence.inspectionDay)
+    }
     func testStaleWatchDayRejectedWithoutMoneyChange() throws {
         var engine = try fresh()
         let command = GameCommand(businessID: engine.state.id, day: 0, action: .register)

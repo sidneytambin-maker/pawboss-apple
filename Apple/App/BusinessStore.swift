@@ -34,6 +34,7 @@ struct AppPreferences: Codable {
     private let preferencesStore: UserDefaults
     private var receivedSequence: Int64 = 0
     private var pendingLink: BusinessLink?
+    private var outboxNeedsRecovery = false
     var isWatch: Bool {
         #if os(watchOS)
         true
@@ -62,12 +63,20 @@ struct AppPreferences: Codable {
             #if os(watchOS)
             let cache = directory.appendingPathComponent("watch-cache.json")
             if FileManager.default.fileExists(atPath: cache.path) {
-                let snapshot = try JSONDecoder().decode(BusinessSnapshot.self, from: Data(contentsOf: cache))
-                if let catalog { _ = try GameEngine(state: snapshot.state, catalog: catalog) }
-                state = snapshot.state; receivedSequence = snapshot.sequence
+                do {
+                    let snapshot = try JSONDecoder().decode(BusinessSnapshot.self, from: Data(contentsOf: cache))
+                    if let catalog { _ = try GameEngine(state: snapshot.state, catalog: catalog) }
+                    state = snapshot.state; receivedSequence = snapshot.sequence
+                } catch { recoveryNeeded = true; errorMessage = "The Watch's business copy could not be read. Refresh Sync will request a new copy; queued actions are kept separately." }
             }
             let queue = directory.appendingPathComponent("watch-outbox.json")
-            if FileManager.default.fileExists(atPath: queue.path) { outbox = try JSONDecoder().decode(WatchOutbox.self, from: Data(contentsOf: queue)) }
+            if FileManager.default.fileExists(atPath: queue.path) {
+                do { outbox = try JSONDecoder().decode(WatchOutbox.self, from: Data(contentsOf: queue)) }
+                catch {
+                    outboxNeedsRecovery = true; recoveryNeeded = true
+                    errorMessage = "Queued Watch actions could not be read. The file has been preserved and new actions are paused to avoid overwriting it. Your iPhone business is unaffected."
+                }
+            }
             inBusiness = true
             #else
             state = try repository.load()
@@ -89,6 +98,12 @@ struct AppPreferences: Codable {
         if testing && ProcessInfo.processInfo.arguments.contains("--seed-business"), let catalog {
             state = try? catalog.newBusiness(name: "Meadow Care", owner: "Sam", title: "Owner", seed: 42)
             inBusiness = true
+        }
+        if testing && ProcessInfo.processInfo.arguments.contains("--seed-care-business"), let catalog {
+            do {
+                let fixture = try UITestBusiness.make(catalog: catalog)
+                try repository.save(fixture); state = fixture; inBusiness = true
+            } catch { errorMessage = "Test business setup failed: \(error.localizedDescription)" }
         }
         #endif
     }
@@ -153,7 +168,7 @@ struct AppPreferences: Codable {
             try FileManager.default.createDirectory(at: repository.directory, withIntermediateDirectories: true)
             try JSONEncoder().encode(snapshot).write(to: repository.directory.appendingPathComponent("watch-cache.json"), options: .atomic)
             state = snapshot.state; receivedSequence = snapshot.sequence
-            recoveryNeeded = false
+            recoveryNeeded = outboxNeedsRecovery
             if let link = pendingLink { pendingLink = nil; open(link) }
             for receipt in snapshot.state.receipts { receive(receipt) }
             for command in outbox.pending { sync?.send(command) }
