@@ -1,7 +1,8 @@
 """Offline regressions for release boundaries. No Apple/GitHub requests are made."""
 import hashlib
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from testflight import owner_invitation
 from direct_upload import APP_ID, checked_operations, chunk_matches, commit_payload, file_payload, upload_payload
 from local_sign import BUNDLES, distribution_entitlements, validated_run
 
@@ -55,6 +56,36 @@ class ReleaseTests(unittest.TestCase):
     def test_other_branch_cannot_be_signed(self):
         with patch("local_sign.gh", return_value='{"head_branch":"untrusted","path":".github/workflows/apple.yml","conclusion":"success"}'):
             with self.assertRaises(AssertionError): validated_run("123", None)
+
+    def test_owner_testing_rejects_a_group_for_another_app(self):
+        apple = Mock()
+        apple.request.return_value = {"data": {"id": "another-app"}}
+        group = {"id": "internal", "attributes": {"isInternalGroup": True}}
+        with self.assertRaises(AssertionError): owner_invitation(apple, [group], {})
+        apple.request.assert_called_once_with("GET", "betaGroups/internal/app")
+
+    def test_owner_testing_requires_verified_account_holder(self):
+        apple = Mock()
+        apple.request.side_effect = [{"data": {"id": APP_ID}}, {"data": []}]
+        group = {"id": "internal", "attributes": {"isInternalGroup": True}}
+        with self.assertRaises(AssertionError): owner_invitation(apple, [group], {})
+        self.assertEqual(apple.request.call_count, 2)
+
+    def test_owner_testing_is_app_scoped_and_does_not_repeat_invites(self):
+        import urllib.parse
+        apple = Mock()
+        group = {"id": "internal", "attributes": {"isInternalGroup": True}}
+        user = {"firstName": "Test", "lastName": "Owner", "roles": ["ACCOUNT_HOLDER"], "username": "owner@example.com"}
+        tester = {"id": "tester", "attributes": {"email": user["username"]}}
+        member = {"data": [{"id": "tester"}]}
+        apple.request.side_effect = [{"data": {"id": APP_ID}}, {"data": [{"attributes": user}]},
+            {"data": [tester]}, member, member, {"data": [{"id": APP_ID}]}]
+        result = owner_invitation(apple, [group], {"contactFirstName": "Test", "contactLastName": "Owner"})
+        self.assertTrue(result["accountHolderAccessVerified"])
+        self.assertTrue(all(call.args[0] == "GET" for call in apple.request.call_args_list))
+        filters = urllib.parse.parse_qs(apple.request.call_args_list[2].args[1].split("?", 1)[1])
+        self.assertEqual(filters["filter[apps]"], [APP_ID])
+        self.assertEqual(filters["filter[email]"], [user["username"]])
 
 if __name__ == "__main__":
     unittest.main()

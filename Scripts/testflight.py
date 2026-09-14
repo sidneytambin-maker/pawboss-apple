@@ -39,6 +39,31 @@ def groups(apple, metadata):
         result.append(group)
     return result
 
+def owner_invitation(apple, configured, contact):
+    internal = next(g for g in configured if g["attributes"]["isInternalGroup"])
+    assert apple.request("GET", "betaGroups/" + internal["id"] + "/app")["data"]["id"] == APP_ID
+    users = apple.request("GET", "users?limit=200")["data"]
+    owners = [u["attributes"] for u in users if "ACCOUNT_HOLDER" in u["attributes"]["roles"]
+              and u["attributes"]["firstName"].casefold() == contact["contactFirstName"].casefold()
+              and u["attributes"]["lastName"].casefold() == contact["contactLastName"].casefold()]
+    assert len(owners) == 1, "Exactly one matching Apple account holder is required"
+    owner = owners[0]
+    testers = apple.request("GET", query("betaTesters", apps=APP_ID, email=owner["username"]))["data"]
+    assert len(testers) <= 1
+    if not testers:
+        tester = apple.request("POST", "betaTesters", {"data": {"type": "betaTesters", "attributes": {
+            "email": owner["username"], "firstName": owner["firstName"], "lastName": owner["lastName"]},
+            "relationships": {"betaGroups": {"data": [{"type": "betaGroups", "id": internal["id"]}]}}}})["data"]
+    else:
+        tester = testers[0]
+    assert tester["attributes"]["email"].casefold() == owner["username"].casefold()
+    path = "betaGroups/" + internal["id"] + "/relationships/betaTesters"
+    if not any(t["id"] == tester["id"] for t in apple.request("GET", path)["data"]):
+        apple.request("POST", path, {"data": [{"type": "betaTesters", "id": tester["id"]}]})
+    assert any(t["id"] == tester["id"] for t in apple.request("GET", path)["data"])
+    assert any(a["id"] == APP_ID for a in apple.request("GET", "betaTesters/" + tester["id"] + "/apps")["data"])
+    return {"tester": tester["id"], "group": internal["id"], "accountHolderAccessVerified": True}
+
 def configure(apple, metadata, contact):
     exact_app(apple)
     assert metadata["name"] == "PawBoss"
@@ -95,6 +120,8 @@ def publish(apple, directory, evidence, openssl, metadata, contact):
     submissions = apple.request("GET", query("betaAppReviewSubmissions", build=build))["data"]
     if not submissions:
         apple.request("POST", "betaAppReviewSubmissions", {"data": {"type": "betaAppReviewSubmissions", "relationships": {"build": {"data": {"type": "builds", "id": build}}}}})
+    invitation = owner_invitation(apple, configured, contact)
+    (directory / "owner-testing.json").write_text(json.dumps(invitation, indent=2))
 
 def availability(apple, number, metadata):
     build = checked_build(apple, number)

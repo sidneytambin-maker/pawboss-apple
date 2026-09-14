@@ -27,9 +27,7 @@ struct DogsView: View {
                                 Label(dog.wellbeing, systemImage: dog.welfare < 60 ? "exclamationmark.circle" : "heart.fill").font(.caption.weight(.medium)).foregroundStyle(dog.welfare < 60 ? Color.pawCoral : Color.pawGreen)
                             }
                         }.padding(.vertical, 7)
-                    }.accessibilityElement(children: .ignore).accessibilityLabel(dog.summary)
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityAction { store.navigate(.dog(dog.id)) }
+                    }.accessibilityLabel(dog.summary)
                         .accessibilityIdentifier("dog-row-\(dog.id.uuidString)")
                         .accessibilityActions {
                             if dog.present {

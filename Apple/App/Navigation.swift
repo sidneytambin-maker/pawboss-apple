@@ -89,7 +89,6 @@ struct DestinationView: View {
     }
 }
 struct NavRow: View {
-    @EnvironmentObject private var store: BusinessStore
     @Environment(\.dynamicTypeSize) private var textSize
     let title: String
     let icon: String
@@ -106,9 +105,7 @@ struct NavRow: View {
                     if !detail.isEmpty { Text(detail).font(.subheadline).foregroundStyle(.primary) }
                 }
             }.padding(.vertical, 5)
-        }.accessibilityElement(children: .ignore).accessibilityLabel(detail.isEmpty ? title : "\(title). \(detail)")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { store.navigate(destination) }
+        }.accessibilityLabel(detail.isEmpty ? title : "\(title). \(detail)")
     }
 }
 struct ValueRow: View {
