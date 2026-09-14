@@ -101,8 +101,14 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["businessTrend"].waitForExistence(timeout: 10))
         screenshot("business-reports", app: app)
         try app.performAccessibilityAudit(for: [.sufficientElementDescription, .trait])
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Care revenue.")).firstMatch.exists)
+        let revenue = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Care revenue.")).firstMatch
+        for _ in 0..<5 {
+            if revenue.exists && revenue.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(revenue.exists)
+        XCTAssertTrue(revenue.isHittable)
+        XCTAssertTrue(revenue.label.contains("£"))
     }
     func testDarkAppearanceAndAudioSettings() throws {
         let app = launch(seed: true)

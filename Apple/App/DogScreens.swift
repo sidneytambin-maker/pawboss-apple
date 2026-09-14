@@ -28,6 +28,8 @@ struct DogsView: View {
                             }
                         }.padding(.vertical, 7)
                     }.accessibilityElement(children: .ignore).accessibilityLabel(dog.summary)
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { store.navigate(.dog(dog.id)) }
                         .accessibilityIdentifier("dog-row-\(dog.id.uuidString)")
                         .accessibilityActions {
                             if dog.present {
