@@ -55,10 +55,14 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Continue"].isEnabled)
     }
-    func testDarkAppearanceAndAudioSettings() {
+    func testDarkAppearanceAndAudioSettings() throws {
         let app = launch(seed: true)
         app.tabBars.buttons["More"].tap()
         app.buttons["Settings and Sync"].tap()
+        app.buttons["appearancePicker"].tap()
+        app.buttons["Dark"].tap()
+        screenshot("settings-dark", app: app)
+        try app.performAccessibilityAudit(for: [.contrast, .sufficientElementDescription, .trait])
         app.swipeUp()
         XCTAssertTrue(app.sliders.matching(NSPredicate(format: "label CONTAINS %@", "volume")).count > 0)
         screenshot("settings-audio", app: app)

@@ -7,6 +7,7 @@ struct SettingsView: View {
         List {
             Section("Appearance") {
                 Picker("Appearance", selection: $store.preferences.appearance) { ForEach(["System", "Light", "Dark"], id: \.self) { Text($0) } }
+                    .accessibilityIdentifier("appearancePicker")
                 Toggle("Reduce motion", isOn: $store.preferences.reduceMotion)
                 Toggle("Business adviser suggestions", isOn: $store.preferences.adviser)
                 Toggle("Haptics", isOn: $store.preferences.haptics)

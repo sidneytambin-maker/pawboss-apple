@@ -120,9 +120,15 @@ def main():
     select_xcode()
     run(["xcodegen", "generate", "--spec", "project.yml"], "generate-project")
     if args.stage in ["all", "tests"]:
-        run(["swift", "test", "--parallel"], "core-tests")
-        ui_tests("iOS")
-        ui_tests("watchOS")
+        failures = []
+        for label, stage in [("Core", lambda: run(["swift", "test", "--parallel"], "core-tests")),
+                             ("iPhone", lambda: ui_tests("iOS")), ("Watch", lambda: ui_tests("watchOS"))]:
+            try:
+                stage()
+            except Exception as error:
+                failures.append(label + ": " + str(error))
+        if failures:
+            raise RuntimeError("Native validation failed; no release archive created. " + "; ".join(failures))
     if args.stage in ["all", "archive"]:
         run(["xcodebuild", "-project", "PawBoss.xcodeproj", "-scheme", "PawBoss", "-configuration", "Release", "-destination", "generic/platform=iOS", "-archivePath", ARCHIVE, "CODE_SIGNING_ALLOWED=NO", "archive"], "release-archive")
         inspect_archive(ARCHIVE)

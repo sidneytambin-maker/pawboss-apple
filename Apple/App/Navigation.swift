@@ -86,6 +86,7 @@ struct DestinationView: View {
     }
 }
 struct NavRow: View {
+    @Environment(\.dynamicTypeSize) private var textSize
     let title: String
     let icon: String
     let destination: Destination
@@ -93,10 +94,12 @@ struct NavRow: View {
     var body: some View {
         NavigationLink(value: destination) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: icon).foregroundStyle(Color.pawGreen).frame(width: 24).accessibilityHidden(true)
+                if !textSize.isAccessibilitySize {
+                    Image(systemName: icon).font(.body).foregroundStyle(Color.pawGreen).frame(width: 24).accessibilityHidden(true)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title).font(.headline)
-                    if !detail.isEmpty { Text(detail).font(.subheadline).foregroundStyle(.secondary) }
+                    if !detail.isEmpty { Text(detail).font(.subheadline).foregroundStyle(.primary) }
                 }
             }.padding(.vertical, 5)
         }.accessibilityElement(children: .ignore).accessibilityLabel(detail.isEmpty ? title : "\(title). \(detail)")

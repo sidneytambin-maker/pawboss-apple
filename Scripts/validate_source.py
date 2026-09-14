@@ -47,8 +47,12 @@ def validate():
         with Image.open(root / "AppIcon.appiconset/image.png") as icon:
             assert icon.size == (1024, 1024) and icon.mode == "RGB"
         for manifest in root.rglob("Contents.json"):
-            for entry in json.loads(manifest.read_text())["images"]:
+            content = json.loads(manifest.read_text())
+            for entry in content.get("images", []):
                 assert (manifest.parent / entry["filename"]).is_file()
+            for entry in content.get("colors", []):
+                assert entry["color"]["color-space"] == "srgb"
+                assert all(0 <= float(value) <= 1 for value in entry["color"]["components"].values())
     audio = list((ROOT / "Apple/App/Audio").glob("*.wav"))
     assert len(audio) == 11
     audio_hashes = set()
