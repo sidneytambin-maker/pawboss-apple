@@ -1,0 +1,16 @@
+name: PawBoss Apple Validation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shared simulation tests
+        working-directory: Apple
+        run: swift test

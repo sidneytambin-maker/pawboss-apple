@@ -1,0 +1,14 @@
+Artifacts/
+ReferenceReview/
+.build/
+.swiftpm/
+__pycache__/
+*.pyc
+*.xcodeproj/
+*.xcworkspace/
+*.p12
+*.p8
+*.mobileprovision
+*.pem
+*.key
+.DS_Store

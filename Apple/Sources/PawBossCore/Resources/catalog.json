@@ -1,0 +1,62 @@
+{
+  "economy": {
+    "initialCash": 750000, "minimumHourlyPay": 1271, "registration": 5000,
+    "insurance": 36000, "licence": 35000, "inspection": 15000,
+    "monthlyRent": 55000, "monthlyUtilities": 14500, "weeklyWaste": 1800,
+    "dailySuppliesPerDog": 220, "loanAPRPercent": 34,
+    "prices": {"dayCare": 3500, "halfDay": 2300, "overnight": 5500, "holiday": 5000, "pickup": 700, "dropoff": 700, "grooming": 3800, "specialist": 4700}
+  },
+  "items": [
+    {"id":"fence","name":"Fence","detail":"Secure boundary panel. Must be on the edge of the plot.","price":2500,"weeklyCost":0,"width":1,"height":1,"layer":"boundary","indoors":false,"outdoors":true,"welfare":0,"lifespanDays":730,"requiresInspection":false},
+    {"id":"gate","name":"Gate","detail":"Lockable entrance. Replaces one fence panel, with its value credited.","price":8000,"weeklyCost":0,"width":1,"height":1,"layer":"boundary","indoors":false,"outdoors":true,"welfare":0,"lifespanDays":730,"requiresInspection":false},
+    {"id":"floor","name":"Washable floor","detail":"A cleanable floor tile. Furniture can stand on top.","price":1200,"weeklyCost":0,"width":1,"height":1,"layer":"ground","indoors":true,"outdoors":false,"welfare":1,"lifespanDays":1095,"requiresInspection":false},
+    {"id":"bed","name":"Dog bed","detail":"A washable bed for quiet rest.","price":3000,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":false,"welfare":4,"lifespanDays":365,"requiresInspection":false},
+    {"id":"water","name":"Water bowl","detail":"Fresh water within reach of the dogs.","price":1000,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":true,"welfare":4,"lifespanDays":730,"requiresInspection":false},
+    {"id":"toys","name":"Enrichment toys","detail":"Rotating puzzle, scent and soft toys.","price":2000,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":true,"welfare":3,"lifespanDays":180,"requiresInspection":false},
+    {"id":"cleaning","name":"Cleaning cupboard","detail":"Secure cleaning supplies away from dogs.","price":4500,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":false,"welfare":2,"lifespanDays":1095,"requiresInspection":false},
+    {"id":"firstaid","name":"First aid cabinet","detail":"Secure welfare records and first aid supplies.","price":3500,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":false,"welfare":2,"lifespanDays":730,"requiresInspection":false},
+    {"id":"desk","name":"Reception desk","detail":"A welcoming arrival and handover point.","price":6500,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":false,"welfare":0,"lifespanDays":1825,"requiresInspection":false},
+    {"id":"shade","name":"Shade shelter","detail":"Cool outdoor rest, especially valuable in warm weather.","price":18000,"weeklyCost":100,"width":2,"height":2,"layer":"furniture","indoors":false,"outdoors":true,"welfare":4,"lifespanDays":730,"requiresInspection":false},
+    {"id":"agility","name":"Agility ramp","detail":"Supervised physical enrichment for confident dogs.","price":15000,"weeklyCost":100,"width":2,"height":1,"layer":"furniture","indoors":false,"outdoors":true,"welfare":4,"lifespanDays":730,"requiresInspection":false},
+    {"id":"path","name":"Level pathway","detail":"A step-free path that shortens daily care routes.","price":1800,"weeklyCost":0,"width":1,"height":1,"layer":"ground","indoors":false,"outdoors":true,"welfare":0,"lifespanDays":1825,"requiresInspection":false},
+    {"id":"garden","name":"Sensory garden","detail":"A calm place to sniff and explore.","price":25000,"weeklyCost":250,"width":2,"height":2,"layer":"furniture","indoors":false,"outdoors":true,"welfare":5,"lifespanDays":1095,"requiresInspection":true},
+    {"id":"grooming","name":"Grooming station","detail":"Requires a grooming room and qualified groomer.","price":45000,"weeklyCost":300,"width":2,"height":1,"layer":"furniture","indoors":true,"outdoors":false,"welfare":2,"lifespanDays":1095,"requiresInspection":true},
+    {"id":"vehicle","name":"Transport vehicle","detail":"A secured dog transport vehicle with fuel and maintenance costs.","price":250000,"weeklyCost":2500,"width":2,"height":2,"layer":"furniture","indoors":false,"outdoors":true,"welfare":0,"lifespanDays":1825,"requiresInspection":true},
+    {"id":"extension","name":"Care building","detail":"A new four by four room. Construction takes seven game days and needs planning approval.","price":450000,"weeklyCost":1600,"width":2,"height":2,"layer":"building","indoors":false,"outdoors":true,"welfare":0,"lifespanDays":3650,"requiresInspection":true},
+    {"id":"staffbench","name":"Staff seating","detail":"A comfortable break area supports staff wellbeing.","price":7000,"weeklyCost":0,"width":1,"height":1,"layer":"furniture","indoors":true,"outdoors":true,"welfare":0,"lifespanDays":1095,"requiresInspection":true}
+  ],
+  "dogs": [
+    {"name":"Teddy","breed":"Golden Retriever","appearance":"Golden coat","personality":"Affectionate and curious","activity":"Gentle retrieving","diet":"Owner-provided meals","health":"No known health needs"},
+    {"name":"Mabel","breed":"Labrador","appearance":"Black coat","personality":"Sociable and food motivated","activity":"Scent games","diet":"Measured meals; no extra treats","health":"No known health needs"},
+    {"name":"Pip","breed":"Border Collie","appearance":"Black and white coat","personality":"Alert and energetic","activity":"Puzzle feeders","diet":"Owner-provided meals","health":"Needs planned rest between play"},
+    {"name":"Otis","breed":"Greyhound","appearance":"Blue-grey coat","personality":"Quiet and gentle","activity":"Short runs and long rests","diet":"Small regular meals","health":"Prefers warm soft bedding"},
+    {"name":"Luna","breed":"Cocker Spaniel","appearance":"Chocolate coat","personality":"Inquisitive and friendly","activity":"Sniffing trails","diet":"No chicken treats","health":"Owner reports a food sensitivity"},
+    {"name":"Jasper","breed":"Mixed Breed","appearance":"White coat with tan patches","personality":"Cautious with new people","activity":"Quiet one-to-one play","diet":"Owner-provided meals","health":"A calm introduction helps"},
+    {"name":"Willow","breed":"Whippet","appearance":"Brindle coat","personality":"Sensitive and playful","activity":"Gentle chase games","diet":"Owner-provided meals","health":"Warm rest space needed"},
+    {"name":"Basil","breed":"Miniature Poodle","appearance":"Apricot curls","personality":"Bright and sociable","activity":"Learning small routines","diet":"Measured meals","health":"Regular coat care"},
+    {"name":"Clover","breed":"Beagle","appearance":"Tricolour coat","personality":"Curious and independent","activity":"Scent trails","diet":"No unplanned treats","health":"Secure boundaries essential"},
+    {"name":"Finn","breed":"Labrador","appearance":"Yellow coat","personality":"Calm and affectionate","activity":"Gentle walks","diet":"Senior meals","health":"Owner-prescribed daily medication"},
+    {"name":"Nell","breed":"Border Terrier","appearance":"Grizzle coat","personality":"Confident and inquisitive","activity":"Digging box and scent games","diet":"Owner-provided meals","health":"No known health needs"},
+    {"name":"Archie","breed":"Cavalier Spaniel","appearance":"Chestnut and white coat","personality":"Gentle and people-focused","activity":"Quiet company","diet":"Measured meals","health":"Short play sessions with rest"}
+  ],
+  "firstNames":["Emma","James","Priya","Oliver","Amina","Leo","Sophie","George","Mei","Daniel","Grace","Hassan","Isla","Thomas","Amara","Noah","Harriet","Sam","Nadia","Lucas","Freya","Ethan","Chloe","Arjun","Lily","Jack","Zara","Ben","Rosa","William","Ava","Theo"],
+  "surnames":["Brooks","Patel","Clarke","Williams","Ahmed","Green","Reed","Morgan","Chen","Wilson","Hughes","Taylor","Singh","Bennett","Evans","Walker","Thomas","Ali","Harris","Wood","Hall","Lewis","King","Shah","Price","Scott","Ward","Bell","Roberts","Cook","Baker","Ross"],
+  "world":[
+    {"id":"vets","name":"Westmoor Veterinary Practice","category":"Vet","detail":"General and emergency care partner.","price":6500,"reputation":85},
+    {"id":"trainer","name":"Kind Steps Training","category":"Trainer","detail":"Reward-based behaviour and staff development.","price":12000,"reputation":82},
+    {"id":"supplies","name":"Meadow Trade Supplies","category":"Supplier","detail":"Cleaning and care supplies. Standard local delivery.","price":2500,"reputation":75},
+    {"id":"groomer","name":"The Tidy Coat","category":"Groomer","detail":"Neighbouring grooming studio and referral partner.","price":3800,"reputation":78},
+    {"id":"competitor1","name":"Oak Lane Dogs","category":"Competitor","detail":"Established day care, known for outdoor space.","price":3700,"reputation":74},
+    {"id":"competitor2","name":"Little Steps Day Care","category":"Competitor","detail":"Small-group puppy and senior care.","price":4100,"reputation":81},
+    {"id":"competitor3","name":"Westmoor Wag Club","category":"Competitor","detail":"Value day care with flexible half-days.","price":3100,"reputation":66},
+    {"id":"rescue","name":"Westmoor Dog Rescue","category":"Community","detail":"A local rescue arranging careful introductions and adoption walks.","price":2500,"reputation":88}
+  ],
+  "events":[
+    {"id":"mud","title":"Wet paws, extra laundry","body":"Heavy rain brought mud indoors. Cleaning supplies and staff time are under pressure.","condition":"rain","cooldown":10,"cost":1200,"welfare":-1,"stress":3,"reputation":0},
+    {"id":"heat","title":"A quieter day in the heat","body":"Warm weather shortened outdoor play. Extra water and calm indoor rest protected the dogs.","condition":"heat","cooldown":14,"cost":800,"welfare":-2,"stress":2,"reputation":0},
+    {"id":"repair","title":"Equipment needs attention","body":"Worn equipment needs professional repair. Preventative maintenance could have reduced this disruption.","condition":"worn","cooldown":14,"cost":8500,"welfare":-5,"stress":6,"reputation":-2},
+    {"id":"team","title":"A stretched team","body":"Repeated pressure has left the team tired. Review the rota, bookings and time for breaks.","condition":"stress","cooldown":10,"cost":0,"welfare":-3,"stress":4,"reputation":-1},
+    {"id":"community","title":"The Westmoor charity walk","body":"The local rescue is arranging a charity walk. The community office has an opportunity to take part.","condition":"settled","cooldown":35,"cost":0,"welfare":0,"stress":0,"reputation":0},
+    {"id":"housing","title":"New neighbours in Westmoor","body":"New homes are bringing dog-owning families to town. Local demand is growing, alongside competition for experienced staff.","condition":"established","cooldown":90,"cost":0,"welfare":0,"stress":0,"reputation":0}
+  ]
+}
