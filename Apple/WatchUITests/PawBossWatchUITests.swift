@@ -10,6 +10,7 @@ final class PawBossWatchUITests: XCTestCase {
         // watchOS exposes nested native toolbar wrappers for the same visible button.
         let menu = app.navigationBars.buttons.matching(identifier: "watchMenu").firstMatch
         XCTAssertTrue(menu.waitForExistence(timeout: 10)); menu.tap()
+        XCTAssertTrue(app.buttons["Office"].waitForExistence(timeout: 10))
     }
     func testWaitingStateHasRefreshNotFakeBusiness() {
         let app = launch(seed: false)
@@ -34,11 +35,21 @@ final class PawBossWatchUITests: XCTestCase {
     func testDogCareActionsAreAvailableOnWatch() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--reset-test-game", "--seed-care-business"]
-        app.launch(); openMenu(app); app.buttons["Dogs"].tap()
+        app.launch(); openMenu(app)
+        let dogs = app.buttons["Dogs"]
+        for _ in 0..<4 {
+            if dogs.exists && dogs.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(dogs.exists); dogs.tap()
         let dog = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "dog-row-")).firstMatch
         XCTAssertTrue(dog.waitForExistence(timeout: 10)); dog.tap()
-        app.swipeUp()
-        XCTAssertTrue(app.buttons["Check In"].waitForExistence(timeout: 5))
+        let checkIn = app.buttons["Check In"]
+        for _ in 0..<6 {
+            if checkIn.exists && checkIn.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(checkIn.exists); XCTAssertTrue(checkIn.isHittable)
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "watch-dog-care"; attachment.lifetime = .keepAlways; add(attachment)
     }

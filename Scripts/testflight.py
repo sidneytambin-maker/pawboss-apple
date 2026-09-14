@@ -88,6 +88,11 @@ def configure(apple, metadata, contact):
     for name, internal in [(metadata["internalGroup"], True), (metadata["externalGroup"], False)]:
         if not any(g["attributes"]["name"] == name for g in all_groups):
             apple.request("POST", "betaGroups", {"data": {"type": "betaGroups", "attributes": {"name": name, "isInternalGroup": internal, "hasAccessToAllBuilds": False, "feedbackEnabled": True, "publicLinkEnabled": False}, "relationships": {"app": {"data": {"type": "apps", "id": APP_ID}}}}})
+    compatibility = {"iosBuildsAvailableForAppleSiliconMac": False, "iosBuildsAvailableForAppleVision": False}
+    for group in groups(apple, metadata):
+        if any(group["attributes"].get(key) != value for key, value in compatibility.items()):
+            apple.request("PATCH", "betaGroups/" + group["id"], {"data": {"id": group["id"], "type": "betaGroups", "attributes": compatibility}})
+    assert all(all(group["attributes"].get(key) == value for key, value in compatibility.items()) for group in groups(apple, metadata))
     saved = apple.request("GET", base + "/betaAppLocalizations")["data"]
     assert any(l["attributes"]["locale"] == metadata["primaryLocale"] and all(l["attributes"].get(k) == v for k, v in attrs.items()) for l in saved)
     saved_review = apple.request("GET", base + "/betaAppReviewDetail")["data"]["attributes"]

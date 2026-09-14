@@ -16,7 +16,6 @@ struct RootView: View {
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             Button("Menu", systemImage: "line.3.horizontal") { menu = true }
-                                .accessibilityElement(children: .ignore)
                                 .accessibilityLabel("Menu")
                                 .accessibilityIdentifier("watchMenu")
                                 .accessibilityHint("Choose a business section.")
