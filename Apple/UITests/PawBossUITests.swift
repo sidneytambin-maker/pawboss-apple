@@ -49,24 +49,35 @@ final class PawBossUITests: XCTestCase {
         var deferred = Set<String>()
         var checked = Set<String>()
         for _ in 0..<16 {
+            let viewport = app.frame
             let bars = app.tabBars.allElementsBoundByIndex.map(\.frame) + app.navigationBars.allElementsBoundByIndex.map(\.frame) + XCUIApplication(bundleIdentifier: "com.apple.springboard").statusBars.allElementsBoundByIndex.map(\.frame)
-            let headings = ["todayCareHeading", "businessPulseHeading"].map { app.staticTexts[$0] }.filter(\.exists)
-            func obscured(_ element: XCUIElement) -> Bool {
-                let frame = element.frame
-                return !app.frame.contains(frame) || bars.contains(where: { $0.intersects(frame) }) || headings.contains(where: { $0.identifier != element.identifier && $0.frame.intersects(frame) })
+            let headings = ["todayCareHeading", "businessPulseHeading"].map { app.staticTexts[$0] }.filter(\.exists).map { (id: $0.identifier, frame: $0.frame) }
+            func obscured(_ frame: CGRect, identifier: String) -> Bool {
+                !viewport.contains(frame) || bars.contains(where: { $0.intersects(frame) }) || headings.contains(where: { $0.id != identifier && $0.frame.intersects(frame) })
             }
             let visibleLabels = app.staticTexts.allElementsBoundByIndex.filter { element in
-                !element.frame.isEmpty && !obscured(element)
+                let frame = element.frame
+                return !frame.isEmpty && !obscured(frame, identifier: element.identifier)
             }.map(\.label)
-            try app.performAccessibilityAudit(for: [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription, .trait]) { issue in
-                // System bars and pinned headings obscure scrolled content. Every deferred
-                // label must also pass an audit with its full frame visible.
-                if issue.auditType == .contrast, let element = issue.element,
-                   obscured(element), !element.label.isEmpty {
-                    deferred.insert(element.label)
-                    return true
+            for attempt in 0..<3 {
+                do {
+                    try app.performAccessibilityAudit(for: [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription, .trait]) { issue in
+                        // Use captured geometry: live queries inside the callback can time out
+                        // Apple's audit service. Every deferred label must pass in full view.
+                        if issue.auditType == .contrast, let element = issue.element,
+                           obscured(element.frame, identifier: element.identifier), !element.label.isEmpty {
+                            deferred.insert(element.label)
+                            return true
+                        }
+                        return false
+                    }
+                    break
+                } catch {
+                    let failure = error as NSError
+                    guard failure.domain == "com.apple.xcode.xctest.accessibilityAudit", failure.code == -56, attempt < 2 else { throw error }
+                    print("Apple audit service timed out; repeating the complete audit, attempt \(attempt + 2).")
+                    Thread.sleep(forTimeInterval: 1)
                 }
-                return false
             }
             checked.formUnion(visibleLabels)
             deferred.subtract(checked)

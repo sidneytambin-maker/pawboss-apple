@@ -39,7 +39,7 @@ final class PawBossWatchUITests: XCTestCase {
         let dogs = app.buttons["Dogs"]
         for _ in 0..<4 {
             if dogs.exists && dogs.isHittable { break }
-            app.swipeUp()
+            app.swipeUp(velocity: .slow)
         }
         XCTAssertTrue(dogs.exists); dogs.tap()
         let dog = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "dog-row-")).firstMatch
@@ -47,7 +47,7 @@ final class PawBossWatchUITests: XCTestCase {
         let checkIn = app.buttons["Check In"]
         for _ in 0..<6 {
             if checkIn.exists && checkIn.isHittable { break }
-            app.swipeUp()
+            app.swipeUp(velocity: .slow)
         }
         XCTAssertTrue(checkIn.exists); XCTAssertTrue(checkIn.isHittable)
         let attachment = XCTAttachment(screenshot: app.screenshot())
