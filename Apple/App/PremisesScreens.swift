@@ -133,7 +133,8 @@ struct SiteMap: View {
                 context.fill(Path(roundedRect: rect, cornerRadius: 3), with: .color(color))
                 if definition.layer != .ground && definition.layer != .boundary {
                     let symbol = icon(definition.id)
-                    let image = context.resolve(Image(systemName: symbol).foregroundStyle(Color.black))
+                    var image = context.resolve(Image(systemName: symbol))
+                    image.shading = .color(.black)
                     context.draw(image, in: rect.insetBy(dx: max(2, cell * 0.18), dy: max(2, cell * 0.18)))
                 }
             }
