@@ -6,6 +6,11 @@ final class PawBossWatchUITests: XCTestCase {
         if seed { app.launchArguments.append("--seed-business") }
         app.launch(); return app
     }
+    func openMenu(_ app: XCUIApplication) {
+        // watchOS exposes nested native toolbar wrappers for the same visible button.
+        let menu = app.navigationBars.buttons.matching(identifier: "watchMenu").firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 10)); menu.tap()
+    }
     func testWaitingStateHasRefreshNotFakeBusiness() {
         let app = launch(seed: false)
         XCTAssertTrue(app.buttons["Refresh Sync"].waitForExistence(timeout: 10))
@@ -13,7 +18,7 @@ final class PawBossWatchUITests: XCTestCase {
     }
     func testMenuHasSubstantialSections() {
         let app = launch(seed: true)
-        XCTAssertTrue(app.buttons["Menu"].waitForExistence(timeout: 10)); app.buttons["Menu"].tap()
+        openMenu(app)
         XCTAssertTrue(app.buttons["Today"].exists); XCTAssertTrue(app.buttons["Office"].exists)
         app.swipeUp()
         XCTAssertTrue(app.buttons["Finance"].exists)
@@ -21,7 +26,7 @@ final class PawBossWatchUITests: XCTestCase {
     }
     func testOfficeOpensEnquiries() {
         let app = launch(seed: true)
-        app.buttons["Menu"].tap(); app.buttons["Office"].tap()
+        openMenu(app); app.buttons["Office"].tap()
         XCTAssertTrue(app.buttons["Enquiries and Quotes"].waitForExistence(timeout: 5))
         app.buttons["Enquiries and Quotes"].tap()
         XCTAssertTrue(app.switches["Include handled enquiries"].waitForExistence(timeout: 5))
@@ -29,7 +34,7 @@ final class PawBossWatchUITests: XCTestCase {
     func testDogCareActionsAreAvailableOnWatch() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--reset-test-game", "--seed-care-business"]
-        app.launch(); app.buttons["Menu"].tap(); app.buttons["Dogs"].tap()
+        app.launch(); openMenu(app); app.buttons["Dogs"].tap()
         let dog = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "dog-row-")).firstMatch
         XCTAssertTrue(dog.waitForExistence(timeout: 10)); dog.tap()
         app.swipeUp()

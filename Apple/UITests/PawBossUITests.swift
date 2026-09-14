@@ -46,7 +46,31 @@ final class PawBossUITests: XCTestCase {
     func testLargeTextDashboardAccessibility() throws {
         let app = launch(seed: true, large: true)
         screenshot("today-accessibility-xxxlarge", app: app)
-        try app.performAccessibilityAudit(for: [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription, .trait])
+        var deferred = Set<String>()
+        var checked = Set<String>()
+        for _ in 0..<16 {
+            let bars = app.tabBars.allElementsBoundByIndex.map(\.frame) + app.navigationBars.allElementsBoundByIndex.map(\.frame)
+            let visibleLabels = app.staticTexts.allElementsBoundByIndex.filter { element in
+                let frame = element.frame
+                return !frame.isEmpty && app.frame.contains(frame) && !bars.contains(where: { $0.intersects(frame) })
+            }.map(\.label)
+            try app.performAccessibilityAudit(for: [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription, .trait]) { issue in
+                // The native floating bar fades underlying text. Defer only that obscured text,
+                // then require it to pass another audit fully visible after scrolling.
+                if issue.auditType == .contrast, let element = issue.element,
+                   bars.contains(where: { $0.intersects(element.frame) }), !element.label.isEmpty {
+                    deferred.insert(element.label)
+                    return true
+                }
+                return false
+            }
+            checked.formUnion(visibleLabels)
+            deferred.subtract(checked)
+            if deferred.isEmpty { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(deferred.isEmpty, "Obscured text was not subsequently audited in full view: \(deferred)")
+        screenshot("today-large-text-audited", app: app)
     }
     func testMainMenuReturnsWithoutLosingBusiness() {
         let app = launch(seed: true)
