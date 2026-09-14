@@ -233,4 +233,99 @@ final class SimulationTests: XCTestCase {
         XCTAssertEqual(a.state.cash, b.state.cash); XCTAssertEqual(a.state.weather, b.state.weather)
         XCTAssertEqual(a.state.generator, b.state.generator)
     }
+    func testLegacySaveMigratesWithoutChangingIDsOrReceipts() throws {
+        let engine = try customerGame()
+        var legacy = SaveEnvelope(business: engine.state); legacy.version = 1
+        let oldData = try JSONEncoder().encode(legacy)
+        let migrated = try FileBusinessRepository.decode(oldData)
+        XCTAssertEqual(migrated.id, engine.state.id)
+        XCTAssertEqual(migrated.dogs.map(\.id), engine.state.dogs.map(\.id))
+        XCTAssertEqual(migrated.receipts.map(\.id), engine.state.receipts.map(\.id))
+        let updated = try JSONEncoder().encode(SaveEnvelope(business: migrated))
+        let envelope = try JSONDecoder().decode(SaveEnvelope.self, from: updated)
+        XCTAssertEqual(envelope.version, 2)
+        XCTAssertEqual(envelope.checksum, try SaveEnvelope.digest(migrated))
+        XCTAssertEqual(try FileBusinessRepository.decode(updated).cash, engine.state.cash)
+    }
+    func testChecksumRejectsSyntacticallyValidEditedSave() throws {
+        let state = try fresh().state
+        let data = try JSONEncoder().encode(SaveEnvelope(business: state))
+        var document = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        var business = try XCTUnwrap(document["business"] as? [String: Any])
+        business["owner"] = "Unverified changed owner"
+        document["business"] = business
+        XCTAssertThrowsError(try FileBusinessRepository.decode(JSONSerialization.data(withJSONObject: document)))
+    }
+    func testFirstDayCashMovementIncludesStartupSpending() throws {
+        var engine = try fresh()
+        apply(.register, to: &engine); apply(.nextDay, to: &engine)
+        XCTAssertEqual(engine.state.cashMovement(from: 0, through: 0), -engine.catalog.economy.registration)
+    }
+    func testForecastDoesNotMultiplyOneConfirmedBookingFourTimes() throws {
+        var engine = try ready()
+        let baseline = engine.monthlyForecast
+        engine.generateEnquiry(source: "Test")
+        apply(.decideEnquiry(engine.state.enquiries[0].id, "accept"), to: &engine)
+        XCTAssertEqual(engine.monthlyForecast - baseline, engine.state.bookings[0].price)
+    }
+    func testForecastIncludesBookingInFourthWeek() throws {
+        var engine = try customerGame()
+        let baseline = engine.monthlyForecast
+        apply(.book(engine.state.dogs[0].id, .dayCare, engine.state.day + 25), to: &engine)
+        XCTAssertEqual(engine.monthlyForecast - baseline, engine.state.prices[Service.dayCare.rawValue])
+    }
+    func testMaintenanceChargesExactlyItsQuoteAndOnlyRepairsQuotedItems() throws {
+        var engine = try fresh()
+        apply(.build("bed", "room2", 0, 0), to: &engine)
+        apply(.build("water", "room2", 0, 1), to: &engine)
+        engine.state.areas[2].items[0].condition = 55
+        engine.state.areas[2].items[1].condition = 95
+        let cash = engine.state.cash; let quote = try engine.maintenanceQuote
+        apply(.maintain, to: &engine)
+        XCTAssertEqual(cash - engine.state.cash, quote)
+        XCTAssertEqual(engine.state.areas[2].items[0].condition, 100)
+        XCTAssertEqual(engine.state.areas[2].items[1].condition, 95)
+    }
+    func testLegacyExtremeBalanceIsRejectedWithoutIntegerTrap() throws {
+        var state = try fresh().state; state.cash = Int.min
+        var legacy = SaveEnvelope(business: state); legacy.version = 1
+        XCTAssertThrowsError(try FileBusinessRepository.decode(JSONEncoder().encode(legacy)))
+    }
+    func testMissingServicePriceIsRejectedBeforeBookingCanCrash() throws {
+        var engine = try fresh()
+        engine.state.prices.removeValue(forKey: Service.dayCare.rawValue)
+        XCTAssertThrowsError(try GameEngine(state: engine.state, catalog: engine.catalog))
+    }
+    func testTamperedLedgerEntryIsRejectedEvenWithMatchingFinalBalance() throws {
+        var engine = try ready()
+        engine.state.ledger[0].amount -= 1
+        XCTAssertThrowsError(try GameEngine(state: engine.state, catalog: engine.catalog))
+    }
+    func testMedicationIsNotInventedByDayCompletion() throws {
+        var engine = try customerGame()
+        engine.state.dogs[0].medications = [Medication(name: "Prescribed care", instructions: "Fictional care plan", dueDay: engine.state.day)]
+        apply(.nextDay, to: &engine)
+        XCTAssertTrue(engine.state.dogs[0].medications[0].givenDays.isEmpty)
+        XCTAssertEqual(engine.state.bookings[0].refunded, engine.state.bookings[0].price)
+    }
+    func testCancelledBookingCannotChargeOnDayCompletion() throws {
+        var engine = try customerGame()
+        apply(.cancelBooking(engine.state.bookings[0].id), to: &engine)
+        apply(.nextDay, to: &engine)
+        XCTAssertFalse(engine.state.bookings[0].paid)
+        XCTAssertEqual(engine.state.reports.last?.revenue, 0)
+    }
+    func testClosedBusinessDoesNotChargeCancelledCare() throws {
+        var engine = try customerGame()
+        apply(.close, to: &engine); apply(.nextDay, to: &engine)
+        XCTAssertEqual(engine.state.bookings[0].status, .cancelled)
+        XCTAssertFalse(engine.state.bookings[0].paid)
+    }
+    func testYearProgressionAndAnniversaryDoNotRepeat() throws {
+        var engine = try fresh()
+        for _ in 0..<366 { apply(.nextDay, to: &engine) }
+        XCTAssertEqual(engine.state.milestones.keys.filter { $0 == "year-1" }.count, 1)
+        XCTAssertEqual(engine.state.day, 366)
+        XCTAssertEqual(engine.state.reports.count, 366)
+    }
 }

@@ -6,11 +6,20 @@ on:
 permissions:
   contents: read
 jobs:
-  core:
+  native-validation:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - name: Shared simulation tests
-        working-directory: Apple
-        run: swift test
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Shared tests, iPhone and Watch UI tests, Release archive
+        run: python3 Scripts/ci.py --stage all
+      - name: Preserve test evidence and unsigned archive
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PawBoss-Apple-validation
+          path: Artifacts/
+          if-no-files-found: warn
+          retention-days: 3

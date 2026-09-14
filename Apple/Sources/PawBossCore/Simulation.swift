@@ -36,6 +36,10 @@ extension GameEngine {
             state.staff[i].stress = bounded(state.staff[i].stress + (onDuty ? pressure : -4))
             state.staff[i].morale = bounded(state.staff[i].morale + (state.staff[i].stress > 65 ? -3 : attendance > 0 ? 1 : 0))
             if onDuty && attendance > 0 && day % 7 == 6 { state.staff[i].skill = bounded(state.staff[i].skill + 1) }
+            if onDuty && attendance > 0 && state.priorities.contains("training") && day % 3 == 0 {
+                state.staff[i].skill = bounded(state.staff[i].skill + 1)
+                state.staff[i].history.append(Memory(day: day, text: "Supervised practice strengthened everyday care skills."))
+            }
             if state.staff[i].stress > 80 && state.random(8) == 0 {
                 state.staff[i].absentUntilDay = day + 2
                 state.messages.append(Message(day: day, sender: state.staff[i].name, title: "Sickness absence", body: "I need two days away to recover. Please review the rota and care cover.", kind: .staff, subjectID: state.staff[i].id))
@@ -87,6 +91,12 @@ extension GameEngine {
         }
         if (day + 1) % 365 == 0 { milestone("year-\((day + 1) / 365)", "\(state.name) celebrates \((day + 1) / 365) years in business.") }
         state.day += 1
+        if state.day % 7 == 0 && state.priorities.contains("communication") {
+            for c in state.customers.indices where state.customers[c].visits > 0 {
+                state.customers[c].trust = bounded(state.customers[c].trust + 1)
+                state.customers[c].history.append(Memory(day: state.day, text: "Received a clear weekly care update."))
+            }
+        }
         state.weather = ["Mild", "Mild", "Cloudy", "Heavy rain", "Warm sunshine", "Cold snap"][state.random(6)]
         if state.day % 30 == 0 { for i in state.dogs.indices { state.dogs[i].ageMonths += 1 } }
         completeConstruction()

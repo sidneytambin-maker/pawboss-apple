@@ -55,6 +55,8 @@ extension GameEngine {
         for date in day..<(day + days) {
             future.day = date
             guard future.licenceValid, future.insured else { throw GameError.invalid("Renew insurance and licensing to cover every requested day.") }
+            guard state.dogs[d].vaccinationDueDay >= date else { throw GameError.invalid("The vaccination record must cover every requested care day.") }
+            if let blocker = future.serviceBlocker(service) { throw GameError.invalid(blocker) }
             let booked = state.bookings.filter { $0.day == date && $0.status != .cancelled }
             guard !booked.contains(where: { $0.dogID == dogID }) else { throw GameError.invalid("This dog already has a booking on that day.") }
             guard booked.count < future.careCapacity else { throw GameError.invalid("That day is at safe staffing or licence capacity. Change the date or improve cover.") }
@@ -214,7 +216,13 @@ public extension GameEngine {
     }
     var monthlyLoanPayment: Pence { state.loan.principal * catalog.economy.loanAPRPercent / 1200 + min(state.loan.principal, max(5000, state.loan.original / 36)) }
     var monthlyForecast: Pence {
-        let weeklyBooked = state.bookings.filter { $0.day >= state.day && $0.day < state.day + 7 && $0.status != .cancelled }.reduce(0) { $0 + $1.price }
-        return weeklyBooked * 4 - weeklyPayroll * 4 - catalog.economy.monthlyRent - catalog.economy.monthlyUtilities - catalog.economy.weeklyWaste * 4 - monthlyLoanPayment
+        let confirmed = state.bookings.filter { $0.day >= state.day && $0.day < state.day + 28 && [.expected, .checkedIn].contains($0.status) && !$0.paid }.reduce(0) { $0 + $1.price }
+        let facilities = state.areas.flatMap(\.items).reduce(0) { $0 + ((try? catalog.item($1.definitionID).weeklyCost) ?? 0) }
+        return confirmed - weeklyPayroll * 4 - catalog.economy.monthlyRent - catalog.economy.monthlyUtilities - (catalog.economy.weeklyWaste + facilities) * 4 - monthlyLoanPayment
+    }
+    var maintenanceQuote: Pence {
+        get throws {
+            try state.areas.flatMap(\.items).filter { $0.condition < 90 }.reduce(0) { $0 + max(100, try catalog.item($1.definitionID).price * (100 - $1.condition) / 300) }
+        }
     }
 }

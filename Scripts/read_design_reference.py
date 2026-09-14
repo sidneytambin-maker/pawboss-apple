@@ -1,5 +1,4 @@
 """Extract only the user-owned Windows design documents, without modifying them."""
-import argparse
 import hashlib
 import json
 import zipfile
@@ -18,7 +17,6 @@ def extract():
     for source in sorted(SOURCE.glob("*.docx")):
         with zipfile.ZipFile(source) as archive:
             document = ElementTree.fromstring(archive.read("word/document.xml"))
-        paragraphs = ["".join(p.itertext()) for p in []]
         paragraphs = ["".join(t.text or "" for t in p.findall(".//w:t", NS))
                       for p in document.findall(".//w:p", NS)]
         text = "\n".join(p for p in paragraphs if p.strip())

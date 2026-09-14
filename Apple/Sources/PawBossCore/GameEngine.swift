@@ -12,6 +12,7 @@ public enum GameAction: Codable, Equatable {
     case book(UUID, Service, Int)
     case cancelBooking(UUID)
     case checkIn(UUID), checkOut(UUID), care(UUID), medication(UUID, UUID), observation(UUID, String), carePlan(UUID, String), contactOwner(UUID)
+    case vaccination(UUID, stateDay: Int, note: String)
     case hire(UUID), dismiss(UUID), promote(UUID), train(UUID, String), staffRole(UUID, StaffRole), pay(UUID, Pence), rota(UUID, [Int]), leave(UUID, Int), praise(UUID)
     case setPrice(Service, Pence), borrow(Pence), repay(Pence)
     case respond(UUID, String), archiveMessage(UUID), readMessage(UUID)
@@ -56,7 +57,7 @@ public struct GameEngine {
         return receipt
     }
     public func validate() throws {
-        guard state.schemaVersion == 1, state.day >= 0, state.revision >= 0, abs(state.cash) < 1_000_000_000_000,
+        guard state.schemaVersion == 1, (0...365000).contains(state.day), state.revision >= 0, (-999_999_999_999...999_999_999_999).contains(state.cash),
               state.loan.principal >= 0, !state.name.isEmpty,
               Set(state.dogs.map(\.id)).count == state.dogs.count,
               Set(state.customers.map(\.id)).count == state.customers.count,
@@ -64,9 +65,28 @@ public struct GameEngine {
               Set(state.bookings.map(\.id)).count == state.bookings.count,
               Set(state.enquiries.map(\.id)).count == state.enquiries.count,
               state.dogs.allSatisfy({ dog in state.customers.contains { $0.id == dog.ownerID } }),
-              state.bookings.allSatisfy({ booking in state.dogs.contains { $0.id == booking.dogID } && booking.price >= 0 && booking.refunded <= booking.price }),
+              state.bookings.allSatisfy({ booking in state.dogs.contains { $0.id == booking.dogID } && (0...1000000).contains(booking.price) && booking.refunded >= 0 && booking.refunded <= booking.price }),
+              Service.allCases.allSatisfy({ (1...1000000).contains(state.prices[$0.rawValue, default: 0]) }),
+              state.staff.allSatisfy({ (0...1000000).contains($0.hourlyPay) && (0...60).contains($0.hoursPerWeek) && $0.workingWeekdays.allSatisfy { (0...6).contains($0) } }),
+              Set(state.areas.map(\.id)).count == state.areas.count,
+              state.areas.allSatisfy({ (1...26).contains($0.rows) && (1...26).contains($0.columns) }),
+              Set(state.receipts.map(\.id)).count == state.receipts.count,
               state.ledger.last.map({ $0.balance == state.cash }) ?? (state.cash == catalog.economy.initialCash)
         else { throw GameError.invalid("The business records did not pass validation. Your previous save has been kept.") }
+        var balance = catalog.economy.initialCash
+        for entry in state.ledger {
+            let next = balance.addingReportingOverflow(entry.amount)
+            guard !next.overflow, next.partialValue == entry.balance else { throw GameError.invalid("The bank history does not reconcile. Your previous save has been kept.") }
+            balance = next.partialValue
+        }
+        for area in state.areas {
+            guard Set(area.items.map(\.id)).count == area.items.count else { throw GameError.invalid("The premises contain duplicate object identities.") }
+            for item in area.items {
+                let definition = try catalog.item(item.definitionID)
+                guard (0...100).contains(item.condition), item.row >= 0, item.column >= 0,
+                      item.row <= area.rows - definition.height, item.column <= area.columns - definition.width else { throw GameError.invalid("A premises object is outside its valid area.") }
+            }
+        }
     }
     mutating func post(_ amount: Pence, _ detail: String, kind: LedgerKind) {
         state.cash += amount
@@ -135,9 +155,9 @@ public struct GameEngine {
         case .maintain:
             let worn = state.areas.flatMap(\.items).filter { $0.condition < 90 }
             guard !worn.isEmpty else { throw GameError.invalid("No maintenance is currently due.") }
-            let cost = try worn.reduce(0) { $0 + max(100, try catalog.item($1.definitionID).price * (100 - $1.condition) / 300) }
+            let cost = try maintenanceQuote
             try spend(cost, "Preventative premises maintenance")
-            for a in state.areas.indices { for i in state.areas[a].items.indices { state.areas[a].items[i].condition = 100 } }
+            for a in state.areas.indices { for i in state.areas[a].items.indices where state.areas[a].items[i].condition < 90 { state.areas[a].items[i].condition = 100 } }
             return "Premises maintenance completed."
         case .applyPlanning:
             guard state.licenceValid, state.customers.count >= 4, state.welfare >= 65 else { throw GameError.invalid("Planning requires council approval, at least four customers and stable dog welfare.") }
@@ -186,6 +206,12 @@ public struct GameEngine {
             state.dogs[d].observations.append(Memory(day: state.day, text: text)); return "Observation saved."
         case .carePlan(let id, let text):
             let d = try dogIndex(id); try validText(text); state.dogs[d].carePlan = text; return "Care plan updated."
+        case .vaccination(let id, let stateDay, let note):
+            let d = try dogIndex(id); try validText(note)
+            guard stateDay > state.day && stateDay <= state.day + 366 else { throw GameError.invalid("Choose a review date within the next year.") }
+            state.dogs[d].vaccinationDueDay = stateDay
+            state.dogs[d].observations.append(Memory(day: state.day, text: "Owner vaccination record reviewed: \(note)"))
+            return "Vaccination record updated."
         case .contactOwner(let id):
             let d = try dogIndex(id); let c = try customerIndex(state.dogs[d].ownerID)
             let note = "Shared \(state.dogs[d].name)'s latest care and wellbeing update."

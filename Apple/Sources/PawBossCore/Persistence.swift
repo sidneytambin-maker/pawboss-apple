@@ -1,9 +1,22 @@
 import Foundation
+import CryptoKit
 
 public struct SaveEnvelope: Codable {
-    public var version: Int = 1
+    public var version: Int = 2
     public var business: BusinessState
+    public var checksum: String?
     public init(business: BusinessState) { self.business = business }
+    enum CodingKeys: String, CodingKey { case version, business, checksum }
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(version, forKey: .version)
+        try values.encode(business, forKey: .business)
+        if version >= 2 { try values.encode(Self.digest(business), forKey: .checksum) }
+    }
+    public static func digest(_ business: BusinessState) throws -> String {
+        let encoder = JSONEncoder(); encoder.outputFormatting = .sortedKeys
+        return SHA256.hash(data: try encoder.encode(business)).map { String(format: "%02x", $0) }.joined()
+    }
 }
 public protocol BusinessRepository {
     func load() throws -> BusinessState?
@@ -21,7 +34,12 @@ public struct FileBusinessRepository: BusinessRepository {
     public static func decode(_ data: Data) throws -> BusinessState {
         let decoder = JSONDecoder()
         let envelope = try decoder.decode(SaveEnvelope.self, from: data)
-        guard envelope.version == 1, envelope.business.schemaVersion == 1 else { throw GameError.invalid("This save needs a newer version of PawBoss. It has not been changed.") }
+        guard [1, 2].contains(envelope.version), envelope.business.schemaVersion == 1 else { throw GameError.invalid("This save needs a newer version of PawBoss. It has not been changed.") }
+        if envelope.version == 2 {
+            guard envelope.checksum == (try SaveEnvelope.digest(envelope.business)) else { throw GameError.invalid("This save's integrity check failed. The previous backup has been preserved.") }
+        }
+        // Version 1 has the same business schema. The next successful save adds
+        // the version 2 checksum without changing identities or replay receipts.
         let catalog = try Catalog.bundled()
         _ = try GameEngine(state: envelope.business, catalog: catalog)
         return envelope.business

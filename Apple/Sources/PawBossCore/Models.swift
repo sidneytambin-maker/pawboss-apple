@@ -294,7 +294,14 @@ public struct BusinessState: Codable, Identifiable {
     public var identitySerial = 0
     public var week: Int { day / 7 + 1 }
     public var date: Date { Calendar.pawBoss.date(byAdding: .day, value: day, to: startDate)! }
-    public var dateText: String { date.formatted(.dateTime.weekday(.wide).day().month(.wide).year().locale(Locale(identifier: "en_GB"))) }
+    public var dateText: String {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide).year().locale(Locale(identifier: "en_GB"))
+        style.timeZone = Calendar.pawBoss.timeZone
+        return date.formatted(style)
+    }
+    public func cashMovement(from firstDay: Int, through lastDay: Int) -> Pence {
+        ledger.filter { $0.day >= firstDay && $0.day <= lastDay }.reduce(0) { $0 + $1.amount }
+    }
     public var ageText: String { day < 365 ? "\(day) days in business" : "\(day / 365) years in business" }
     public var pendingEnquiries: [Enquiry] { enquiries.filter(\.isActionable) }
     public var todayBookings: [Booking] { bookings.filter { $0.day == day && $0.status != .cancelled } }

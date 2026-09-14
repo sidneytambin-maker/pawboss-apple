@@ -1,0 +1,106 @@
+name: PawBoss
+options:
+  minimumXcodeGenVersion: 2.42.0
+  deploymentTarget:
+    iOS: '17.0'
+    watchOS: '10.0'
+packages:
+  PawBossCore:
+    path: .
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+    DEVELOPMENT_TEAM: HT5X86Q4DD
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: NO
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+targets:
+  PawBoss:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes: [WatchAssets.xcassets]
+    dependencies:
+      - package: PawBossCore
+      - target: PawBossWatch
+        embed: true
+        link: false
+        copy:
+          destination: productsDirectory
+          subpath: '$(CONTENTS_FOLDER_PATH)/Watch'
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sidneytambin.pawboss
+        TARGETED_DEVICE_FAMILY: '1'
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    info:
+      path: Config/iOS-Info.plist
+      properties:
+        CFBundleDisplayName: PawBoss
+        CFBundleShortVersionString: '$(MARKETING_VERSION)'
+        CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        CFBundleURLTypes:
+          - CFBundleURLName: com.sidneytambin.pawboss
+            CFBundleURLSchemes: [pawboss]
+  PawBossWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: App
+        excludes: [Assets.xcassets]
+    dependencies:
+      - package: PawBossCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sidneytambin.pawboss.watchkitapp
+        TARGETED_DEVICE_FAMILY: '4'
+        SKIP_INSTALL: YES
+    info:
+      path: Config/Watch-Info.plist
+      properties:
+        CFBundleDisplayName: PawBoss
+        CFBundleShortVersionString: '$(MARKETING_VERSION)'
+        CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.sidneytambin.pawboss
+        WKRunsIndependentlyOfCompanionApp: false
+        ITSAppUsesNonExemptEncryption: false
+  PawBossUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: UITests
+    dependencies:
+      - target: PawBoss
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sidneytambin.pawboss.uitests
+        TARGETED_DEVICE_FAMILY: '1'
+  PawBossWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources: WatchUITests
+    dependencies:
+      - target: PawBossWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sidneytambin.pawboss.watchkitapp.uitests
+schemes:
+  PawBoss:
+    build:
+      targets:
+        PawBoss: all
+    test:
+      targets: [PawBossUITests]
+  PawBossWatch:
+    build:
+      targets:
+        PawBossWatch: all
+    test:
+      targets: [PawBossWatchUITests]
