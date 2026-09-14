@@ -49,16 +49,20 @@ final class PawBossUITests: XCTestCase {
         var deferred = Set<String>()
         var checked = Set<String>()
         for _ in 0..<16 {
-            let bars = app.tabBars.allElementsBoundByIndex.map(\.frame) + app.navigationBars.allElementsBoundByIndex.map(\.frame)
-            let visibleLabels = app.staticTexts.allElementsBoundByIndex.filter { element in
+            let bars = app.tabBars.allElementsBoundByIndex.map(\.frame) + app.navigationBars.allElementsBoundByIndex.map(\.frame) + XCUIApplication(bundleIdentifier: "com.apple.springboard").statusBars.allElementsBoundByIndex.map(\.frame)
+            let headings = ["todayCareHeading", "businessPulseHeading"].map { app.staticTexts[$0] }.filter(\.exists)
+            func obscured(_ element: XCUIElement) -> Bool {
                 let frame = element.frame
-                return !frame.isEmpty && app.frame.contains(frame) && !bars.contains(where: { $0.intersects(frame) })
+                return !app.frame.contains(frame) || bars.contains(where: { $0.intersects(frame) }) || headings.contains(where: { $0.identifier != element.identifier && $0.frame.intersects(frame) })
+            }
+            let visibleLabels = app.staticTexts.allElementsBoundByIndex.filter { element in
+                !element.frame.isEmpty && !obscured(element)
             }.map(\.label)
             try app.performAccessibilityAudit(for: [.contrast, .elementDetection, .hitRegion, .sufficientElementDescription, .trait]) { issue in
-                // The native floating bar fades underlying text. Defer only that obscured text,
-                // then require it to pass another audit fully visible after scrolling.
+                // System bars and pinned headings obscure scrolled content. Every deferred
+                // label must also pass an audit with its full frame visible.
                 if issue.auditType == .contrast, let element = issue.element,
-                   bars.contains(where: { $0.intersects(element.frame) }), !element.label.isEmpty {
+                   obscured(element), !element.label.isEmpty {
                     deferred.insert(element.label)
                     return true
                 }

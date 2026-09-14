@@ -13,15 +13,19 @@ struct TodayView: View {
                     Label(state.isOpen ? "Open for care" : "Site closed", systemImage: state.isOpen ? "door.left.hand.open" : "door.left.hand.closed")
                         .font(.subheadline.weight(.semibold)).foregroundStyle(state.isOpen ? Color.pawGreen : Color.secondary)
                 }.padding(.vertical, 10).accessibilityElement(children: .combine)
-                Section("Today's Care") {
+                Section {
                     NavRow(title: "Dogs attending", icon: "dog.fill", destination: .dogs, detail: "\(state.dogs.filter(\.present).count) checked in; \(state.todayBookings.count) booked")
                     NavRow(title: "Arrivals and collections", icon: "person.and.background.dotted", destination: .bookings, detail: "\(state.todayBookings.filter { $0.status == .expected }.count) expected; \(state.dogs.filter(\.present).count) to collect")
                     NavRow(title: "Care team", icon: "person.2.fill", destination: .staff, detail: "\(state.staff.filter { $0.onDuty(day: state.day) }.count) employees on duty\(state.ownerOnDuty ? ", plus you" : "")")
                     ForEach(state.dogs.filter { $0.present && ($0.welfare < 60 || $0.medications.contains { $0.dueDay <= state.day && !$0.givenDays.contains(state.day) }) }) { dog in
                         NavRow(title: dog.name, icon: "heart.text.square", destination: .dog(dog.id), detail: "Care record needs attention")
                     }
+                } header: {
+                    Text("Today's Care").foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading).background(.background)
+                        .accessibilityIdentifier("todayCareHeading")
                 }
-                Section("Business Pulse") {
+                Section {
                     NavRow(title: "Cash available", icon: "sterlingsign.circle.fill", destination: .finance, detail: money(state.cash))
                     ValueRow(title: "Booked care value today", value: money(state.expectedRevenue))
                     NavRow(title: "Enquiries", icon: "envelope.badge", destination: .enquiries, detail: "\(state.pendingEnquiries.count) waiting")
@@ -30,6 +34,10 @@ struct TodayView: View {
                     if !state.licenceValid { NavRow(title: "Opening readiness", icon: "checklist", destination: .readiness, detail: "\(state.readiness().filter(\.complete).count) of \(state.readiness().count) ready") }
                     if state.areas.flatMap(\.items).contains(where: { $0.condition < 60 }) { NavRow(title: "Maintenance due", icon: "wrench.adjustable", destination: .premises) }
                     if let inspection = state.licence.inspectionDay { NavRow(title: "Council inspection", icon: "checkmark.seal", destination: .readiness, detail: "In \(inspection - state.day) game days") }
+                } header: {
+                    Text("Business Pulse").foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading).background(.background)
+                        .accessibilityIdentifier("businessPulseHeading")
                 }
                 Section {
                     if state.isOpen { Act(title: "Close Site", icon: "door.left.hand.closed", action: .close) }
