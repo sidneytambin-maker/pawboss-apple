@@ -4,6 +4,7 @@ import PawBossCore
 struct DailyPrioritiesView: View {
     @EnvironmentObject private var store: BusinessStore
     @State private var selection = DailyPrioritySlots([])
+    @State private var loaded = false
     var body: some View {
         Form {
             ForEach(0..<3, id:\.self) { index in
@@ -23,7 +24,9 @@ struct DailyPrioritiesView: View {
                 .accessibilityIdentifier("saveDailyPriorities")
                 .accessibilityHint("Applies these priorities to daily routines. Replacing a priority changes the support provided by those routines.")
             if !store.status.isEmpty { Text(store.status).font(.footnote) }
-        }.navigationTitle("Daily Priorities").onAppear { selection = DailyPrioritySlots(store.state?.priorities ?? []) }
+        }.navigationTitle("Daily Priorities").onAppear {
+            if !loaded { selection = DailyPrioritySlots(store.state?.priorities ?? []); loaded = true }
+        }
     }
 }
 
@@ -122,7 +125,9 @@ struct PartnerDetailView: View {
                 ValueRow(title:"Thirty-day agreement", value:"\(money(terms.fee)) paid now. No automatic renewal.")
                 ValueRow(title:"Advantages", value:terms.advantage)
                 ValueRow(title:"Trade-offs", value:terms.tradeoff)
-                ValueRow(title:"Cash after choosing", value:money(state.cash - terms.fee))
+                if state.activePartner(provider.category)?.providerID != id {
+                    ValueRow(title:"Cash after choosing", value:money(state.cash - terms.fee))
+                }
                 if let current = state.activePartner(provider.category) {
                     ValueRow(title:"Current agreement", value:"\(store.catalog?.world.first { $0.id == current.providerID }?.name ?? current.providerID). Active through business day \(current.endDay).")
                     if current.providerID == id {

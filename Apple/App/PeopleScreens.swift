@@ -48,8 +48,12 @@ struct CustomerDetailView: View {
 struct InboxView: View {
     @EnvironmentObject private var store: BusinessStore
     let onlyAlerts: Bool
-    @State private var filter = "Unread"
+    @State private var filter: String
     @State private var search = ""
+    init(onlyAlerts: Bool) {
+        self.onlyAlerts = onlyAlerts
+        _filter = State(initialValue: onlyAlerts ? "All" : "Unread")
+    }
     var body: some View {
         List {
             NavRow(title:"Daily Priorities", icon:"list.number", destination:.priorities)

@@ -304,6 +304,7 @@ private struct AreaOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     let id: String
     @State private var purpose: RoomUse = .unassigned
+    @State private var loaded = false
     var body: some View {
         Form {
             if let state = store.state, let catalog = store.catalog, let area = state.areas.first(where: { $0.id == id }) {
@@ -336,7 +337,9 @@ private struct AreaOptionsView: View {
                 }
             }
         }.navigationTitle("Area Options")
-            .onAppear { purpose = store.state?.areas.first { $0.id == id }?.purpose ?? .unassigned }
+            .onAppear {
+                if !loaded { purpose = store.state?.areas.first { $0.id == id }?.purpose ?? .unassigned; loaded = true }
+            }
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close", systemImage: "xmark") { dismiss() } } }
     }
 }
