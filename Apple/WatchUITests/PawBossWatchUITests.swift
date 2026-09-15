@@ -15,8 +15,9 @@ final class PawBossWatchUITests: XCTestCase {
     func reach(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 30) {
         for _ in 0..<attempts {
             if element.exists && element.isHittable { return }
-            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.80))
-            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.62)))
+            // Keep the scroll gesture outside the native sliders' touch regions.
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.80))
+            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.62)))
         }
         XCTAssertTrue(element.exists && element.isHittable, "Control not reached: \(element)")
     }
