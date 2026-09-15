@@ -146,6 +146,16 @@ struct SiteMap: View {
         }.background(scheme == .dark ? Color.black : Color.white)
     }
     private func icon(_ id: String) -> String {
-        ["bed": "bed.double.fill", "water": "drop.fill", "toys": "tennisball.fill", "cleaning": "sparkles", "firstaid": "cross.case.fill", "desk": "desktopcomputer", "shade": "umbrella.fill", "agility": "triangle.fill", "garden": "leaf.fill", "grooming": "scissors", "vehicle": "car.fill", "extension": "house.fill", "staffbench": "chair.fill"][id] ?? "square.fill"
+        if ["snuffle","scentposts","digbox","sensorymat"].contains(id) { return "leaf.fill" }
+        if ["puzzle","trainingkit","lickmat","softplay"].contains(id) { return "puzzlepiece.fill" }
+        if ["retrieve","tunnel","lowhurdles"].contains(id) { return "tennisball.fill" }
+        if ["orthobed","raisedbed","blankets","quietden","privacy","acoustic"].contains(id) { return "bed.double.fill" }
+        if ["coolmat","fan"].contains(id) { return "fan.fill" }
+        if id == "canopy" { return "umbrella.fill" }
+        if ["pawwash","towels","washer","mop","bins","handwash","toywash"].contains(id) { return "sparkles" }
+        if ["locker","breaktable"].contains(id) { return "chair.fill" }
+        if id == "kettle" { return "cup.and.saucer.fill" }
+        if id == "noticeboard" { return "list.bullet.clipboard.fill" }
+        return ["bed": "bed.double.fill", "water": "drop.fill", "toys": "tennisball.fill", "cleaning": "sparkles", "firstaid": "cross.case.fill", "desk": "desktopcomputer", "shade": "umbrella.fill", "agility": "triangle.fill", "garden": "leaf.fill", "grooming": "scissors", "vehicle": "car.fill", "extension": "house.fill", "staffbench": "chair.fill"][id] ?? "square.fill"
     }
 }

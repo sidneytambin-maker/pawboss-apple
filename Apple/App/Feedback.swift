@@ -99,7 +99,7 @@ extension GameAction {
         }
         var id = sound.rawValue
         if sound == .dog {
-            let options = ["dog-1", "dog-2", "dog-3"].filter { $0 != previousDog }
+            let options: [String] = ["dog-1", "dog-2", "dog-3"].filter { $0 != previousDog }
             id = options.randomElement() ?? "dog-1"; previousDog = id
         }
         effect(id)

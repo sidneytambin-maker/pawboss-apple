@@ -93,7 +93,7 @@ def run():
         print(spec["id"],round(length,1),"seconds",flush=True)
     assert len(assets) == 23 and sum(a["duration"] for a in assets if a["kind"]=="music") >= 600
     manifest = {"version":2,"assets":assets,"sources":sources}
-    (OUTPUT/"audio-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+    (OUTPUT/"audio-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n", newline="\n")
     for old in OUTPUT.glob("*.wav"):
         assert old.parent.resolve() == OUTPUT.resolve()
         old.unlink()

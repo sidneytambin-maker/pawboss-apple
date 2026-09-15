@@ -20,7 +20,7 @@ extension GameEngine {
         if template.name == "Finn" {
             dog.medications.append(Medication(name: "Owner-prescribed medication", instructions: "Follow the written owner and vet care plan. Record one scheduled administration per game day.", dueDay: state.day))
         }
-        let service: Service = serial % 3 == 0 ? .halfDay : .dayCare
+        let service: Service = customer.bookingHabit == "Two morning half-days" || serial % 3 == 0 ? .halfDay : .dayCare
         state.enquiries.append(Enquiry(customer: customer, dog: dog, service: service, requestedDay: state.day + 1, source: source, requirements: "\(template.health). \(template.diet)."))
     }
     mutating func decideEnquiry(_ id: UUID, _ decision: String) throws -> String {
