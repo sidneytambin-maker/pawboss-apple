@@ -96,12 +96,14 @@ struct OpeningGuideView: View {
                         NavRow(title:"Meet Your Enquiries", icon:"envelope.open", destination:.enquiries)
                     }
                 }
-                DisclosureGroup("Your Opening Journey") {
-                    ForEach(stages) { stage in
-                        Label(stage.title, systemImage:stage.complete ? "checkmark.circle.fill" : "circle")
-                            .accessibilityLabel("\(stage.title). \(stage.complete ? "Complete" : "Still to do").")
-                    }
-                }
+                NavigationLink {
+                    List {
+                        ForEach(stages) { stage in
+                            Label(stage.title, systemImage:stage.complete ? "checkmark.circle.fill" : "circle")
+                                .accessibilityLabel("\(stage.title). \(stage.complete ? "Complete" : "Still to do").")
+                        }
+                    }.navigationTitle("Opening Journey")
+                } label: { Label("Your Opening Journey", systemImage: "list.bullet.clipboard") }
                 Button("Return to Business", systemImage:"arrow.uturn.backward") { store.path = [] }
                     .accessibilityIdentifier("returnFromOpening")
             }

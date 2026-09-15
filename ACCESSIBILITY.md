@@ -8,7 +8,7 @@ Accessibility is always present; there is no separate accessibility mode.
 - Premises squares are real buttons with coordinate-first labels for empty spaces, boundary fences/gates, layered equipment, full footprints and building rooms. Add Item, item-specific Move/Remove and destination Move Item Here are VoiceOver actions. Activation opens the same square inspector for sighted and screen-reader users. Closing the inspector restores focus to its square. Room purpose and maintenance live in Area Options, not position pickers.
 - Daily priorities use three named pickers; choosing an existing priority swaps slots. Save does not become disabled because a fourth toggle was selected. Announcements confirm saved or queued actions accurately.
 - Combined dog, staff, customer and navigation summaries, with relevant custom actions for care, contact, editing and direct forms.
-- Explicit row/column selection and the top object on each premises square; floor layers do not hide the useful object name.
+- Stable square dimensions and a shared content description keep visible positions and spoken coordinates aligned; underlying floors do not hide equipment names.
 - Destructive/purchase confirmations and cancellation paths. State changes are announced only after saving or with an explicit queued status on Watch.
 - Notification destinations identify the business, record and relevant task, rather than opening a generic list.
 - Swift Charts have spoken labels, values and summaries, with the same report values available as text.
