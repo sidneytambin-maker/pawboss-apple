@@ -15,9 +15,12 @@ final class PawBossWatchUITests: XCTestCase {
     func reach(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 30) {
         for _ in 0..<attempts {
             if element.exists && element.isHittable { return }
-            // Keep the scroll gesture outside the native sliders' touch regions.
-            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.80))
-            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.62)))
+            // watchOS can report its tiny scroll indicator as the application's main window.
+            // Anchor gestures to the content instead, outside the native slider track.
+            let content = app.collectionViews.firstMatch.exists ? app.collectionViews.firstMatch : app.scrollViews.firstMatch
+            let surface = content.exists ? content : app.windows.element(boundBy: 0)
+            let start = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.80))
+            start.press(forDuration: 0.05, thenDragTo: surface.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.62)))
         }
         XCTAssertTrue(element.exists && element.isHittable, "Control not reached: \(element)")
     }
@@ -81,8 +84,10 @@ final class PawBossWatchUITests: XCTestCase {
         openMenu(app)
         let more = app.buttons["More"]; reach(more, in: app); more.tap()
         let settings = app.buttons["Settings and Sync"]; reach(settings, in: app); settings.tap()
-        let music = app.sliders["volume-Music"]; reach(music, in: app)
-        XCTAssertTrue(String(describing: music.value ?? "").contains("50"))
+        for category in ["Music", "Ambience", "Dogs", "Customers", "Office", "Gameplay"] {
+            let volume = app.sliders["volume-\(category)"]; reach(volume, in: app)
+            XCTAssertTrue(String(describing: volume.value ?? "").contains("50"), "Default volume for \(category)")
+        }
         let library = app.buttons["Sound Library"]; reach(library, in: app); library.tap()
         XCTAssertTrue(app.buttons["stopAudioPreview"].waitForExistence(timeout: 5))
         let preview = app.buttons["preview-music-town"]; reach(preview, in: app); preview.tap()

@@ -58,7 +58,7 @@ final class PawBossUITests: XCTestCase {
         let water = app.buttons["catalogue-water"]; reveal(water, app: app); water.tap()
         let purchase = app.buttons["purchaseItem"]; reveal(purchase, app: app)
         XCTAssertTrue(purchase.label.contains("Place")); purchase.tap()
-        app.buttons["confirmPurchase"].tap()
+        app.buttons.matching(identifier: "confirmPurchase").firstMatch.tap()
         XCTAssertTrue(first.waitForExistence(timeout: 5)); XCTAssertTrue(first.label.contains("Water bowl"))
         first.tap()
         let move = app.buttons["move-water"]; reveal(move, app: app); move.tap()

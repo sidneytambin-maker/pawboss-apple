@@ -64,7 +64,9 @@ struct AreaView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if !overview {
-                    Button("Area Options", systemImage: "slider.horizontal.3") { tools = true }.accessibilityIdentifier("areaOptions")
+                    Button { tools = true } label: {
+                        Image(systemName: "slider.horizontal.3").foregroundStyle(.primary)
+                    }.accessibilityLabel("Area Options").accessibilityIdentifier("areaOptions")
                 }
             }
         }
