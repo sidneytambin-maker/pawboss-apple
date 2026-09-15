@@ -176,12 +176,12 @@ final class SimulationTests: XCTestCase {
         XCTAssertTrue(engine.state.secureBoundary)
         XCTAssertFalse(engine.perform(.buildBoundary).applied)
     }
-    func testLayeredFloorAndBedSpeakOnlyTopObject() throws {
+    func testLayeredFloorAndBedSpeakBothContents() throws {
         var engine = try fresh()
         apply(.build("floor", "room2", 0, 0), to: &engine)
         apply(.build("bed", "room2", 0, 0), to: &engine)
         let area = engine.state.areas[2]
-        XCTAssertEqual(engine.state.squareDescription(area: area, row: 0, column: 0, catalog: engine.catalog), "A1. Dog bed.")
+        XCTAssertEqual(engine.state.squareDescription(area: area, row: 0, column: 0, catalog: engine.catalog), "A1. Dog bed. Washable floor.")
     }
     func testInvalidPlacementNeverSpends() throws {
         var engine = try fresh(); let cash = engine.state.cash

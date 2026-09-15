@@ -72,10 +72,28 @@ public extension BusinessState {
     func starterBuilding(row: Int, column: Int) -> Bool { (3...6).contains(row) && (1...8).contains(column) }
     func squareDescription(area: Area, row: Int, column: Int, catalog: Catalog) -> String {
         let coordinate = area.coordinate(row: row, column: column)
-        if area.isOutdoor && starterBuilding(row: row, column: column) { return "\(coordinate). Starter building." }
-        guard let top = itemsAt(area: area, row: row, column: column, catalog: catalog).first,
-              let definition = try? catalog.item(top.definitionID) else { return "\(coordinate). Empty." }
-        return "\(coordinate). \(definition.name).\(top.readyDay > day ? " Under construction." : top.condition < 45 ? " Repair needed." : "")"
+        if area.isOutdoor && starterBuilding(row: row, column: column) {
+            return "\(coordinate). Starter building, two customisable rooms."
+        }
+        let objects = itemsAt(area: area, row: row, column: column, catalog: catalog)
+        guard !objects.isEmpty else { return "\(coordinate). Empty." }
+        let contents = objects.compactMap { object -> String? in
+            guard let definition = try? catalog.item(object.definitionID) else { return nil }
+            var text = definition.name
+            if definition.layer == .boundary { text += ", boundary" }
+            if definition.width > 1 || definition.height > 1 {
+                text += ", \(definition.width) by \(definition.height), starts at \(area.coordinate(row: object.row, column: object.column))"
+            }
+            if object.readyDay > day { text += ", ready on day \(object.readyDay + 1)" }
+            else if object.condition < 45 { text += ", repair needed" }
+            return text
+        }
+        return "\(coordinate). \(contents.joined(separator: ". "))."
+    }
+    func placementPrice(_ definition: ItemDefinition, area: Area, row: Int, column: Int, catalog: Catalog) -> Pence {
+        let replacesFence = definition.id == "gate" && itemsAt(area: area, row: row, column: column, catalog: catalog).contains { $0.definitionID == "fence" }
+        let credit = replacesFence ? ((try? catalog.item("fence").price) ?? 0) : 0
+        return max(0, definition.price - credit)
     }
 }
 
@@ -113,7 +131,7 @@ extension GameEngine {
             state.areas[areaIndex].items[i].row = row; state.areas[areaIndex].items[i].column = column
         } else {
             let credit = replacedFence == nil ? 0 : try catalog.item("fence").price
-            try spend(max(0, definition.price - credit), "Installed \(definition.name.lowercased()) at \(area.name), \(area.coordinate(row: row, column: column))", kind: .investment)
+            try spend(max(0, definition.price - credit), "\(definition.placedVerb) \(definition.name.lowercased()) at \(area.name), \(area.coordinate(row: row, column: column))", kind: .investment)
             state.areas[areaIndex].items.append(PlacedItem(definitionID: itemID, row: row, column: column, installedDay: state.day, readyDay: state.day + (definition.layer == .building ? 7 : 0)))
         }
         if let replacedFence { state.areas[areaIndex].items.removeAll { $0.id == replacedFence } }

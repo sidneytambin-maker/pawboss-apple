@@ -38,13 +38,16 @@ Verified on 15 September 2026:
 - Apple upload COMPLETE with no reported errors or warnings. Build processing VALID.
 - Apple build ID: ebbaa695-2e95-4d2a-af4a-3ac813120351, version 0.1.0 (1).
 - Internal TestFlight: IN_BETA_TESTING. Account-holder tester membership verified.
-- External group has this build. Beta App Review submitted: WAITING_FOR_REVIEW; external build WAITING_FOR_BETA_REVIEW.
+- External group has this build. Beta App Review APPROVED; external build IN_BETA_TESTING.
 - Beta description, testing instructions and review contact are saved and verified. Mac and Apple Vision availability are disabled on both groups.
-- Public link is disabled pending approval. No public-link email has been sent.
+- Public link enabled: https://testflight.apple.com/join/WU2jJvtN, limit 100 testers. The public page returned HTTP 200 and identified PawBoss.
+- The shareable public link was emailed once to the owner's Gmail on 15 September. The message clearly identifies build 1; this sprint's changes are not yet published.
 
 Native evidence is retained locally in ignored `Artifacts/Run34912120697`. Signing, upload and beta receipts are in ignored `Artifacts/Release-0.1.0-1-verified`. The earlier `Artifacts/Release-0.1.0-1` package failed inspection and was never uploaded; do not distribute it.
 
-An hourly thread follow-up is configured to verify Apple's decision, enable the external public link after approval, verify its PawBoss page, and email it once through the owner's Gmail. It remains quiet on unchanged waiting states. Apple review is an external dependency, not a completed release.
+The build-1 review follow-up is paused after approval, public-page verification and the successful email. The ignored public-link-email.json receipt records completion to prevent duplicate mail.
+
+Build 2 is in development. Run 34953774473 passed 57 core tests, nine iPhone UI tests and physical iPhone/Watch compilation, but failed a Watch audio navigation test. It is not a release candidate. The new premises-grid, onboarding, priority and provider changes need a fresh complete native run before signing or upload.
 
 ## Known Beta Boundaries
 

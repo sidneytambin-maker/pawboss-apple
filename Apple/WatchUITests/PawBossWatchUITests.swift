@@ -12,6 +12,28 @@ final class PawBossWatchUITests: XCTestCase {
         XCTAssertTrue(menu.waitForExistence(timeout: 10)); menu.tap()
         XCTAssertTrue(app.buttons["Office"].waitForExistence(timeout: 10))
     }
+    func reach(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 30) {
+        for _ in 0..<attempts {
+            if element.exists && element.isHittable { return }
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.80))
+            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.62)))
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "Control not reached: \(element)")
+    }
+    func testWatchPremisesSquaresOpenItemCatalogue() {
+        let app = launch(seed: true); openMenu(app)
+        let more = app.buttons["More"]; reach(more, in: app); more.tap()
+        let premises = app.buttons["Premises"]; reach(premises, in: app); premises.tap()
+        let room = app.buttons["roomLink-room2"]; reach(room, in: app); room.tap()
+        let square = app.buttons["square-room2-0-0"]; reach(square, in: app)
+        XCTAssertEqual(square.label, "A1. Empty.")
+        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = "watch-room-grid"; attachment.lifetime = .keepAlways; add(attachment)
+        square.tap()
+        let addItem = app.buttons["addItem"]; reach(addItem, in: app); addItem.tap()
+        let water = app.buttons["catalogue-water"]; reach(water, in: app); water.tap()
+        let purchase = app.buttons["purchaseItem"]; reach(purchase, in: app)
+        XCTAssertTrue(purchase.label.contains("Place"))
+    }
     func testWaitingStateHasRefreshNotFakeBusiness() {
         let app = launch(seed: false)
         XCTAssertTrue(app.buttons["Refresh Sync"].waitForExistence(timeout: 10))
@@ -56,20 +78,13 @@ final class PawBossWatchUITests: XCTestCase {
     func testWatchAudioDefaultsAndPreviews() {
         let app = launch(seed: true)
         openMenu(app)
-        func reach(_ element: XCUIElement, attempts: Int = 14) {
-            for _ in 0..<attempts {
-                if element.exists && element.isHittable { return }
-                app.swipeUp(velocity: .slow)
-            }
-            XCTAssertTrue(element.isHittable)
-        }
-        let more = app.buttons["More"]; reach(more); more.tap()
-        let settings = app.buttons["Settings and Sync"]; reach(settings); settings.tap()
-        let music = app.sliders["volume-Music"]; reach(music)
+        let more = app.buttons["More"]; reach(more, in: app); more.tap()
+        let settings = app.buttons["Settings and Sync"]; reach(settings, in: app); settings.tap()
+        let music = app.sliders["volume-Music"]; reach(music, in: app)
         XCTAssertTrue(String(describing: music.value ?? "").contains("50"))
-        let library = app.buttons["Sound Library"]; reach(library); library.tap()
+        let library = app.buttons["Sound Library"]; reach(library, in: app); library.tap()
         XCTAssertTrue(app.buttons["stopAudioPreview"].waitForExistence(timeout: 5))
-        let preview = app.buttons["preview-music-town"]; reach(preview); preview.tap()
+        let preview = app.buttons["preview-music-town"]; reach(preview, in: app); preview.tap()
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "watch-audio-library"; attachment.lifetime = .keepAlways; add(attachment)
     }

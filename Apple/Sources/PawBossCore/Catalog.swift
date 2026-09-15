@@ -30,7 +30,9 @@ public struct Catalog: Codable {
         guard result.items.count >= 15, !result.dogs.isEmpty, !result.firstNames.isEmpty,
               Set(result.items.map(\.id)).count == result.items.count,
               Service.allCases.allSatisfy({ result.economy.prices[$0.rawValue, default: 0] > 0 }),
-              result.items.allSatisfy({ $0.price >= 0 && $0.width > 0 && $0.height > 0 && $0.lifespanDays > 0 })
+              result.items.allSatisfy({ $0.price >= 0 && $0.width > 0 && $0.height > 0 && $0.lifespanDays > 0 }),
+              result.world.allSatisfy({ $0.terms?.valid ?? true }),
+              Set(result.world.map(\.id)).count == result.world.count
         else { throw GameError.invalid("PawBoss content could not be validated.") }
         return result
     }

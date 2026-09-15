@@ -66,7 +66,7 @@ struct StaffTaskView: View {
                 case .training:
                     ValueRow(title: "Development", value: member.development)
                     Picker("Training course", selection: $course) { ForEach(GameEngine.courses, id: \.self) { Text($0) } }
-                    Act(title: "Arrange Training", icon: "graduationcap", action: .train(id, course), confirmation: "Invest one hundred and twenty pounds in this course?")
+                    Act(title: "Arrange Training", icon: "graduationcap", action: .train(id, course), confirmation: "Invest \(money(store.engine?.trainingPrice ?? 12000)) in this course, including any active trainer agreement discount?")
                 case .role:
                     Picker("Role", selection: $role) { ForEach(StaffRole.allCases) { Text($0.title).tag($0) } }
                     Act(title: "Update Role", icon: "person.badge.key", action: .staffRole(id, role))

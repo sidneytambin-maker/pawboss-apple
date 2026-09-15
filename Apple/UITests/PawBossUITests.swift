@@ -11,6 +11,14 @@ final class PawBossUITests: XCTestCase {
     func screenshot(_ name: String, app: XCUIApplication) {
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
     }
+    func reveal(_ element: XCUIElement, app: XCUIApplication) {
+        for _ in 0..<24 {
+            if element.exists && element.isHittable { return }
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.78))
+            start.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.52)))
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "Expected accessible control: \(element)")
+    }
     func testFirstRunAndNewBusiness() {
         let app = launch()
         XCTAssertTrue(app.buttons["New Business"].waitForExistence(timeout: 10))
@@ -20,6 +28,10 @@ final class PawBossUITests: XCTestCase {
         app.textFields["businessName"].tap(); app.textFields["businessName"].typeText("Meadow Care")
         app.textFields["ownerName"].tap(); app.textFields["ownerName"].typeText("Sam")
         app.buttons["Create Business"].tap()
+        let welcome = app.staticTexts["Welcome to Meadow Care"]
+        XCTAssertTrue(welcome.waitForExistence(timeout: 10))
+        screenshot("opening-guide", app: app)
+        let back = app.buttons["returnFromOpening"]; reveal(back, app: app); back.tap()
         XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Meadow Care"].exists)
         screenshot("new-business-today", app: app)
@@ -33,15 +45,43 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Recruitment"].waitForExistence(timeout: 5))
         screenshot("staff", app: app)
     }
-    func testPremisesHasNonDragCoordinateControls() {
+    func testPremisesSquaresAddMoveAndDescribeEquipment() {
         let app = launch(seed: true)
         app.tabBars.buttons["Premises"].tap()
-        app.swipeUp()
-        let area = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Room two")).firstMatch
+        screenshot("premises-outdoor-grid", app: app)
+        let area = app.buttons["roomLink-room2"]
         XCTAssertTrue(area.waitForExistence(timeout: 5)); area.tap()
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts["selectedSquare"].waitForExistence(timeout: 5))
-        screenshot("premises-coordinate-editor", app: app)
+        let first = app.buttons["square-room2-0-0"]
+        XCTAssertTrue(first.waitForExistence(timeout: 5)); XCTAssertEqual(first.label, "A1. Empty.")
+        screenshot("room-empty-grid", app: app)
+        first.tap(); app.buttons["addItem"].tap()
+        let water = app.buttons["catalogue-water"]; reveal(water, app: app); water.tap()
+        let purchase = app.buttons["purchaseItem"]; reveal(purchase, app: app)
+        XCTAssertTrue(purchase.label.contains("Place")); purchase.tap()
+        app.buttons["confirmPurchase"].tap()
+        XCTAssertTrue(first.waitForExistence(timeout: 5)); XCTAssertTrue(first.label.contains("Water bowl"))
+        first.tap()
+        let move = app.buttons["move-water"]; reveal(move, app: app); move.tap()
+        let target = app.buttons["square-room2-1-0"]
+        XCTAssertTrue(target.waitForExistence(timeout: 5)); target.tap()
+        XCTAssertEqual(first.label, "A1. Empty.")
+        XCTAssertEqual(target.label, "A2. Water bowl.")
+        screenshot("room-water-moved", app: app)
+    }
+    func testThreeDailyPriorityPickersCanAlwaysSaveUniqueChoices() {
+        let app = launch(seed: true)
+        app.tabBars.buttons["Office"].tap(); app.buttons["Inbox"].tap()
+        screenshot("inbox-overview", app: app)
+        app.buttons["Daily Priorities"].tap()
+        XCTAssertTrue(app.buttons["dailyPriority1"].waitForExistence(timeout: 5))
+        for index in 1...3 {
+            let picker = app.buttons["dailyPriority\(index)"]; reveal(picker, app: app); XCTAssertTrue(picker.isEnabled)
+        }
+        app.buttons["dailyPriority3"].tap(); app.buttons["Rest"].tap()
+        let save = app.buttons["saveDailyPriorities"]; reveal(save, app: app)
+        XCTAssertTrue(save.isEnabled); save.tap()
+        XCTAssertTrue(app.staticTexts["Daily priorities saved."].waitForExistence(timeout: 5))
+        screenshot("three-daily-priorities", app: app)
     }
     func testLargeTextDashboardAccessibility() throws {
         let app = launch(seed: true, large: true)

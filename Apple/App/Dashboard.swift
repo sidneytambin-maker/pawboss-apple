@@ -13,6 +13,9 @@ struct TodayView: View {
                     Label(state.isOpen ? "Open for care" : "Site closed", systemImage: state.isOpen ? "door.left.hand.open" : "door.left.hand.closed")
                         .font(.subheadline.weight(.semibold)).foregroundStyle(state.isOpen ? Color.pawGreen : Color.secondary)
                 }.padding(.vertical, 10).accessibilityElement(children: .combine)
+                if state.milestones["opening"] == nil {
+                    NavRow(title:"Your First Opening", icon:"flag.checkered", destination:.opening, detail:state.openingStages.first { !$0.complete }?.title ?? "Ready to welcome customers")
+                }
                 Section {
                     NavRow(title: "Dogs attending", icon: "dog.fill", destination: .dogs, detail: "\(state.dogs.filter(\.present).count) checked in; \(state.todayBookings.count) booked")
                     NavRow(title: "Arrivals and collections", icon: "person.and.background.dotted", destination: .bookings, detail: "\(state.todayBookings.filter { $0.status == .expected }.count) expected; \(state.dogs.filter(\.present).count) to collect")
@@ -63,6 +66,7 @@ struct OfficeView: View {
                 NavRow(title: "Staff and Recruitment", icon: "person.badge.key", destination: .staff)
             }
             Section("Business") {
+                NavRow(title:"Daily Priorities", icon:"list.number", destination:.priorities)
                 NavRow(title: "Finance", icon: "sterlingsign.circle", destination: .finance)
                 NavRow(title: "Licensing, Strategy and Marketing", icon: "briefcase", destination: .business)
                 NavRow(title: "Reports", icon: "chart.xyaxis.line", destination: .reports)

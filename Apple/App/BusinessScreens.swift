@@ -4,7 +4,6 @@ import PawBossCore
 
 struct BusinessView: View {
     @EnvironmentObject private var store: BusinessStore
-    @State private var priorities: Set<String> = []
     var body: some View {
         List {
             if let state = store.state, let economy = store.catalog?.economy {
@@ -22,11 +21,8 @@ struct BusinessView: View {
                 Section("Strategy") {
                     NavRow(title: "Service Prices", icon: "tag", destination: .pricing)
                     Act(title: "Start Local Campaign", icon: "megaphone", action: .market, confirmation: "Spend thirty-five pounds on a seven-day local introduction campaign?")
-                    ForEach(["rest", "enrichment", "cleaning", "communication", "maintenance", "training"], id: \.self) { priority in
-                        Toggle(priority.capitalized, isOn: Binding(get: { priorities.contains(priority) }, set: { if $0 { priorities.insert(priority) } else { priorities.remove(priority) } }))
-                    }
-                    Act(title: "Save Three Daily Priorities", icon: "checkmark", action: .priorities(priorities.sorted()))
-                        .disabled(priorities.count > 3)
+                    NavRow(title:"Daily Priorities", icon:"list.number", destination:.priorities, detail:state.priorities.map { $0.capitalized }.joined(separator:", "))
+                    if state.milestones["opening"] == nil { NavRow(title:"Your First Opening", icon:"flag.checkered", destination:.opening) }
                 }
                 Section("Development") {
                     Act(title: "Apply for Planning", icon: "building.2", action: .applyPlanning, confirmation: "Commission a planning assessment and survey for two hundred pounds? A decision is due in seven days.")
@@ -35,7 +31,6 @@ struct BusinessView: View {
                 }
             }
         }.listStyle(.plain).navigationTitle("Business")
-            .onAppear { priorities = Set(store.state?.priorities ?? []) }
     }
 }
 struct FinanceView: View {
@@ -176,16 +171,27 @@ struct HistoryView: View {
 }
 struct CommunityView: View {
     @EnvironmentObject private var store: BusinessStore
+    @State private var category = "Vet"
     var body: some View {
         List {
             if let state = store.state {
                 Text("Westmoor").font(.title2.bold())
                 ValueRow(title: "Local conditions", value: "\(state.weather). Local day-care prices change as neighbouring businesses develop.")
-                ForEach(["Competitor", "Supplier", "Vet", "Trainer", "Groomer", "Community"], id: \.self) { category in
-                    Section(category) {
-                        ForEach(state.world.filter { $0.category == category }) { business in
-                            ValueRow(title: business.name, value: "\(business.detail) \(category == "Competitor" ? "Day-care price: \(money(business.price))." : "")")
-                            if category != "Competitor" { Act(title: "Partner with \(business.name)", icon: "person.2", action: .community(business.id), confirmation: "Spend twenty-five pounds on a local introduction and partnership? It remains active for a month.") }
+                Picker("Compare", selection:$category) {
+                    ForEach(["Vet","Supplier","Trainer","Groomer","Community","Competitor"], id:\.self) { Text($0 == "Vet" ? "Vets" : $0 == "Community" ? "Community groups" : $0 + "s").tag($0) }
+                }.accessibilityIdentifier("providerCategory")
+                if category == "Competitor" {
+                    ForEach(state.world.filter { $0.category == category }) { business in
+                        ValueRow(title:business.name, value:"\(business.detail) Day care \(money(business.price)). Reputation \(business.reputation) out of 100.")
+                    }
+                } else {
+                    if let current = state.activePartner(category) {
+                        ValueRow(title:"Your current choice", value:"\(store.catalog?.world.first { $0.id == current.providerID }?.name ?? current.providerID). \(current.endDay - state.day) days remaining.")
+                    } else { ValueRow(title:"Your current choice", value:"No active \(category.lowercased()) agreement. Partner agreements are optional, not opening requirements.") }
+                    ForEach((store.catalog?.world ?? []).filter { $0.category == category }) { business in
+                        if let terms = business.terms {
+                            NavRow(title:business.name, icon:providerSymbol(category), destination:.partner(business.id),
+                                detail:"\(money(terms.fee)) for 30 days. \(terms.advantage)")
                         }
                     }
                 }

@@ -16,7 +16,7 @@ public enum GameAction: Codable, Equatable {
     case hire(UUID), dismiss(UUID), promote(UUID), train(UUID, String), staffRole(UUID, StaffRole), pay(UUID, Pence), rota(UUID, [Int]), leave(UUID, Int), praise(UUID)
     case setPrice(Service, Pence), borrow(Pence), repay(Pence)
     case respond(UUID, String), archiveMessage(UUID), readMessage(UUID)
-    case ownerCover(Bool), priorities([String]), community(String)
+    case ownerCover(Bool), priorities([String]), community(String), endPartnership(String)
 }
 public struct GameCommand: Codable, Identifiable {
     public var id: UUID
@@ -31,7 +31,14 @@ public struct GameEngine {
     public var state: BusinessState
     public let catalog: Catalog
     public init(state: BusinessState, catalog: Catalog) throws {
-        self.state = state; self.catalog = catalog; try validate()
+        self.state = state; self.catalog = catalog
+        // Add published provider choices to older saves without replacing records or competitor prices.
+        for provider in catalog.world {
+            if let index = self.state.world.firstIndex(where: { $0.id == provider.id }) {
+                if provider.category != "Competitor" { self.state.world[index] = provider }
+            } else { self.state.world.append(provider) }
+        }
+        try validate()
     }
     public mutating func perform(_ action: GameAction) -> Receipt {
         apply(GameCommand(businessID: state.id, day: state.day, action: action))
@@ -57,6 +64,13 @@ public struct GameEngine {
         return receipt
     }
     public func validate() throws {
+        for (category, contract) in state.partnerContracts ?? [:] {
+            guard ["Vet","Supplier","Trainer","Groomer","Community"].contains(category),
+                  state.world.contains(where: { $0.id == contract.providerID && $0.category == category }),
+                  contract.startDay >= 0, contract.startDay <= state.day, contract.terms.valid else {
+                throw GameError.invalid("A provider agreement is invalid. Previous business data is kept.")
+            }
+        }
         guard state.schemaVersion == 1, (0...365000).contains(state.day), state.revision >= 0, (-999_999_999_999...999_999_999_999).contains(state.cash),
               state.loan.principal >= 0, !state.name.isEmpty,
               Set(state.dogs.map(\.id)).count == state.dogs.count,
@@ -137,20 +151,32 @@ public struct GameEngine {
         case .configureRoom(let id, let purpose):
             guard !state.isOpen, let i = state.areas.firstIndex(where: { $0.id == id && !$0.isOutdoor }) else { throw GameError.invalid("Close the site and choose an indoor room before changing its use.") }
             state.areas[i].purpose = purpose; return "\(state.areas[i].name) set to \(purpose.title.lowercased())."
-        case .floorRoom(let id): try floorRoom(id); return "Washable flooring installed."
-        case .buildBoundary: try buildBoundary(); return "Missing perimeter fencing installed. Existing gates kept."
-        case .build(let item, let area, let row, let col): try build(itemID: item, areaID: area, row: row, column: col); return "\(try catalog.item(item).name) installed."
+        case .floorRoom(let id): try floorRoom(id); remember("Washable flooring fitted."); return "Washable flooring fitted."
+        case .buildBoundary: try buildBoundary(); remember("Missing perimeter fencing built. Existing gates kept."); return "Missing perimeter fencing built. Existing gates kept."
+        case .build(let item, let area, let row, let col):
+            try build(itemID:item, areaID:area, row:row, column:col)
+            let definition = try catalog.item(item)
+            let coordinate = state.areas.first { $0.id == area }!.coordinate(row:row, column:col)
+            let result = "\(definition.placedVerb) \(definition.name.lowercased()) at \(coordinate)."
+            remember(result); return result
         case .move(let id, let area, let row, let col):
             guard let item = state.areas.first(where: { $0.id == area })?.items.first(where: { $0.id == id }) else { throw GameError.invalid("This item is no longer here.") }
-            try build(itemID: item.definitionID, areaID: area, row: row, column: col, movingID: id); return "Item moved."
+            try build(itemID: item.definitionID, areaID: area, row: row, column: col, movingID: id)
+            let definition = try catalog.item(item.definitionID)
+            let coordinate = state.areas.first { $0.id == area }!.coordinate(row: row, column: col)
+            let result = "Moved \(definition.name.lowercased()) to \(coordinate)."
+            remember(result); return result
         case .remove(let id, let area):
             guard !state.isOpen else { throw GameError.invalid("Close the site before removing equipment.") }
             guard let a = state.areas.firstIndex(where: { $0.id == area }), let i = state.areas[a].items.firstIndex(where: { $0.id == id }) else { throw GameError.invalid("This item has already been removed.") }
             let item = state.areas[a].items[i]
             guard item.definitionID != "extension" else { throw GameError.invalid("Care buildings cannot be demolished while their rooms form part of the licensed site.") }
-            let value = try catalog.item(item.definitionID).price * Pence(item.condition) / 400
-            state.areas[a].items.remove(at: i); post(value, "Equipment resale", kind: .investment)
-            return "Item removed. \(money(value)) resale value received."
+            let definition = try catalog.item(item.definitionID)
+            let value = definition.price * Pence(item.condition) / 400
+            let coordinate = state.areas[a].coordinate(row: item.row, column: item.column)
+            state.areas[a].items.remove(at: i); post(value, "Resale: \(definition.name)", kind: .investment)
+            let result = "Removed \(definition.name.lowercased()) from \(coordinate). \(money(value)) resale value received."
+            remember(result); return result
         case .clean:
             guard state.cleanliness < 100 else { throw GameError.invalid("The site is already clean.") }
             try spend(1200, "Additional deep cleaning supplies"); state.cleanliness = 100; return "Deep cleaning completed."
@@ -241,14 +267,16 @@ public struct GameEngine {
             let m = try messageIndex(id); state.messages[m].read = true; return "Message marked as read."
         case .ownerCover(let enabled): state.ownerOnDuty = enabled; return enabled ? "Owner care cover on." : "Owner care cover off. Review today's staffing capacity."
         case .priorities(let choices):
-            guard choices.count <= 3, Set(choices).count == choices.count, choices.allSatisfy({ ["rest", "enrichment", "cleaning", "communication", "maintenance", "training"].contains($0) }) else { throw GameError.invalid("Choose up to three different daily priorities.") }
+            guard choices.count <= 3, Set(choices).count == choices.count, choices.allSatisfy({ DailyPrioritySlots.choices.contains($0) }) else { throw GameError.invalid("Choose up to three different daily priorities.") }
             state.priorities = choices; return "Daily priorities saved."
         case .community(let id):
-            guard state.world.contains(where: { $0.id == id }) else { throw GameError.invalid("This local partner is not available.") }
-            guard state.eventLastDays["partner-\(id)", default: -30] <= state.day - 30 else { throw GameError.invalid("Your recent partnership is still active. Review it next month.") }
-            try spend(2500, "Community partnership with \(state.world.first { $0.id == id }!.name)")
-            state.eventLastDays["partner-\(id)"] = state.day; remember("Built a local partnership with \(state.world.first { $0.id == id }!.name).")
-            return "Partnership arranged. The local community will hear about your business."
+            return try choosePartner(id)
+        case .endPartnership(let category):
+            guard let contract = state.activePartner(category) else { throw GameError.invalid("There is no active agreement in this category.") }
+            state.partnerContracts?.removeValue(forKey:category)
+            state.eventLastDays.removeValue(forKey:"partner-\(contract.providerID)")
+            remember("Ended the \(category.lowercased()) agreement. Upfront fees are not refunded.")
+            return "Agreement ended. No further benefits or charges apply."
         }
     }
     func dogIndex(_ id: UUID) throws -> Int {

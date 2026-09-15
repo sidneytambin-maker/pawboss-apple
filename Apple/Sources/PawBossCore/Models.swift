@@ -249,6 +249,7 @@ public struct WorldBusiness: Codable, Identifiable {
     public var detail: String
     public var price: Pence
     public var reputation: Int
+    public var terms: PartnerTerms? = nil
 }
 public struct Receipt: Codable, Identifiable {
     public var id: UUID
@@ -289,6 +290,7 @@ public struct BusinessState: Codable, Identifiable {
     public var history: [Memory] = []
     public var milestones: [String: Int] = [:]
     public var world: [WorldBusiness]
+    public var partnerContracts: [String: PartnerContract]? = nil
     public var eventLastDays: [String: Int] = [:]
     public var receipts: [Receipt] = []
     public var generator: UInt64

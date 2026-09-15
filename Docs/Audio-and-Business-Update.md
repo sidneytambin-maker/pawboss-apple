@@ -8,6 +8,11 @@
 - 36 fictional dog profiles, at least 30 breed descriptions, six communication preferences and six returning-booking patterns.
 - 48 equipment choices. Suitable, maintained equipment complements individual rest, enrichment, hygiene and team routines. Benefits are capped and do not replace essential care. Purchases show remaining cash and recurring commitments.
 - 14 conditional business events, with lessons about margins, retention, seasonal preparation, staffing and reserves. Existing IDs and save schema remain intact.
+- Directly selectable premises grids replace row/column pickers. Every square names its coordinate and all contents, including boundaries, underlying flooring and multi-square footprints. Both starter rooms have direct links and their own grids. Actions support adding, moving and removing items without dragging; purchases show costs and fence-replacement credit before confirmation.
+- Item language follows the actual activity: place portable equipment, install fitted equipment, fit flooring, lay paths, plant gardens and build boundaries/buildings. Results and history identify the affected square.
+- A six-stage opening guide follows actual registration, premises, essentials, insurance and inspection rules. It does not bypass council checks or require debt.
+- Three daily-priority pickers swap duplicate choices and keep Save available. Inbox messages have sender, date, subject, preview and status, with filters and a direct priorities link.
+- Three providers each for vets, suppliers, trainers, groomers and community support. Thirty-day agreements have distinct upfront fees and trade-offs, no automatic renewal and at most one provider per category. Discounts affect actual care/course ledger entries; support depends on essential care; referrals are capped. Less reliable suppliers can require a retail top-up, recorded as a cost and business lesson. Old saves acquire the new choices without replacing dogs, customers, bookings or competitor prices.
 
 ## Price and care model
 

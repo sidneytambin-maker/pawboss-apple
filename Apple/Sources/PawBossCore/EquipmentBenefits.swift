@@ -1,5 +1,32 @@
 import Foundation
 
+public extension ItemDefinition {
+    var placementVerb: String {
+        if layer == .boundary || layer == .building { return "Build" }
+        if id == "garden" { return "Plant" }
+        if id == "path" { return "Lay" }
+        if layer == .ground { return "Fit" }
+        if ["grooming","washer","handwash","pawwash","fan","acoustic","canopy","cleaning","firstaid"].contains(id) { return "Install" }
+        return "Place"
+    }
+    var placedVerb: String {
+        switch placementVerb { case "Build": return "Built"; case "Fit": return "Fitted"; case "Install": return "Installed"; case "Plant": return "Planted"; case "Lay": return "Laid"; default: return "Placed" }
+    }
+    var symbol: String {
+        if ["snuffle","scentposts","digbox","sensorymat","garden"].contains(id) { return "leaf.fill" }
+        if ["puzzle","trainingkit","lickmat","softplay"].contains(id) { return "puzzlepiece.fill" }
+        if ["retrieve","tunnel","lowhurdles","toys","agility"].contains(id) { return "tennisball.fill" }
+        if ["bed","orthobed","raisedbed","blankets","quietden","privacy","acoustic"].contains(id) { return "bed.double.fill" }
+        if ["coolmat","fan"].contains(id) { return "fan.fill" }
+        if ["canopy","shade"].contains(id) { return "umbrella.fill" }
+        if ["pawwash","towels","washer","mop","bins","handwash","toywash","cleaning"].contains(id) { return "sparkles" }
+        if ["locker","breaktable","staffbench"].contains(id) { return "chair.fill" }
+        if id == "kettle" { return "cup.and.saucer.fill" }
+        if id == "noticeboard" { return "list.bullet.clipboard.fill" }
+        return ["water":"drop.fill","firstaid":"cross.case.fill","desk":"desktopcomputer","grooming":"scissors","vehicle":"car.fill","extension":"house.fill","fence":"rectangle.split.3x1","gate":"door.left.hand.closed","floor":"square.grid.3x3","path":"point.topleft.down.curvedto.point.bottomright.up"][id] ?? "shippingbox.fill"
+    }
+}
+
 public struct CareEquipmentSupport: Equatable {
     public var welfare: Int
     public var stressRelief: Int

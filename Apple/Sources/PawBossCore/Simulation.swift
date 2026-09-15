@@ -28,6 +28,7 @@ extension GameEngine {
             }
         }
         let attendance = state.bookings.filter { $0.day == day && $0.status == .completed }.count
+        partnerDailyConsequences(attendance: attendance)
         state.cleanliness = bounded(state.cleanliness - attendance * 2 - (state.weather == "Heavy rain" ? attendance : 0) + (state.priorities.contains("cleaning") ? 8 : 0) + (attendance > 0 ? state.cleaningEquipmentSupport : 0))
         if attendance > 0 && state.priorities.contains("cleaning") { post(-300 - Pence(attendance) * 40, "Daily cleaning and laundry", kind: .expense) }
         for i in state.staff.indices where state.staff[i].employed {
@@ -113,9 +114,14 @@ extension GameEngine {
         }
         let activeCampaign = (state.marketingUntilDay ?? -1) >= state.day
         let referrals = state.customers.contains { $0.trust >= 75 }
-        let localPartner = state.eventLastDays.contains { $0.key.hasPrefix("partner-") && $0.value > state.day - 30 }
+        let legacyPartner = state.eventLastDays.contains { key, day in
+            key.hasPrefix("partner-") && day > state.day - 30 &&
+            !(state.partnerContracts ?? [:]).values.contains { "partner-" + $0.providerID == key }
+        }
+        let localPartner = legacyPartner || state.partnerReferralStrength > 0
         let sensiblePrice = state.prices[Service.dayCare.rawValue, default: 3500] <= catalog.economy.prices[Service.dayCare.rawValue, default: 3500] * Pence(140 + state.reputation) / 100
-        if state.pendingEnquiries.count < 12 && sensiblePrice && (activeCampaign || (referrals && state.random(3) == 0) || (localPartner && state.random(4) == 0)) {
+        let partnerChance = state.partnerReferralStrength > 0 ? max(3, 7 - state.partnerReferralStrength) : 4
+        if state.pendingEnquiries.count < 12 && sensiblePrice && (activeCampaign || (referrals && state.random(3) == 0) || (localPartner && state.random(partnerChance) == 0)) {
             generateEnquiry(source: activeCampaign ? "Local introduction campaign" : referrals ? "Customer recommendation" : "Community partner")
         }
         if state.day % 7 == 0 {

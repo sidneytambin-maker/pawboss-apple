@@ -48,21 +48,51 @@ struct CustomerDetailView: View {
 struct InboxView: View {
     @EnvironmentObject private var store: BusinessStore
     let onlyAlerts: Bool
-    @State private var filter = "All"
+    @State private var filter = "Unread"
     @State private var search = ""
     var body: some View {
         List {
-            Picker("Show", selection: $filter) { ForEach(["All", "Unread", "Complaints", "Reviews", "Archived"], id: \.self) { Text($0) } }
+            NavRow(title:"Daily Priorities", icon:"list.number", destination:.priorities)
+            Picker("Show", selection: $filter) { ForEach(["All", "Unread", "Needs a Response", "Complaints", "Reviews", "Archived"], id: \.self) { Text($0) } }
             if let state = store.state {
+                let unread = state.messages.filter { !$0.read && !$0.archived }.count
+                let waiting = state.messages.filter { !$0.archived && !$0.resolved && [.message,.complaint,.review,.referral].contains($0.kind) }.count
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        Label("\(unread) unread", systemImage:"envelope.badge").foregroundStyle(Color.pawGreen)
+                        Spacer(minLength:8)
+                        Label("\(waiting) to answer", systemImage:"bubble.left.and.bubble.right").foregroundStyle(Color.primary)
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                    Label("\(unread) unread", systemImage:"envelope.badge").foregroundStyle(Color.pawGreen)
+                    Label("\(waiting) to answer", systemImage:"bubble.left.and.bubble.right").foregroundStyle(Color.primary)
+                    }
+                }.font(.subheadline.weight(.semibold)).accessibilityElement(children:.combine)
                 let messages = state.messages.filter { m in
                     (filter == "Archived" ? m.archived : !m.archived) &&
-                    (search.isEmpty || m.title.localizedCaseInsensitiveContains(search) || m.sender.localizedCaseInsensitiveContains(search)) &&
+                    (search.isEmpty || m.title.localizedCaseInsensitiveContains(search) || m.sender.localizedCaseInsensitiveContains(search) || m.body.localizedCaseInsensitiveContains(search)) &&
                     (filter != "Unread" || !m.read) && (filter != "Complaints" || m.kind == .complaint) &&
+                    (filter != "Needs a Response" || (!m.resolved && [.message,.complaint,.review,.referral].contains(m.kind))) &&
                     (filter != "Reviews" || m.kind == .review) && (!onlyAlerts || (!m.resolved && [.complaint, .inspection, .staff].contains(m.kind)))
                 }
                 if messages.isEmpty { Text("No messages in this view.") }
                 ForEach(messages.reversed()) { message in
-                    NavRow(title: message.title, icon: message.read ? "envelope.open" : "envelope.badge", destination: .message(message.id), detail: "\(message.sender). \(message.read ? "Read" : "Unread").")
+                    NavigationLink(value:Destination.message(message.id)) {
+                        VStack(alignment:.leading, spacing:6) {
+                            HStack(alignment:.firstTextBaseline) {
+                                Text(message.sender).font(.subheadline.weight(.semibold))
+                                Spacer(minLength:8)
+                                Text("Day \(message.day + 1)").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Text(message.title).font(.headline)
+                            Text(message.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                            Label(message.resolved ? "Answered" : message.read ? "Read" : "Unread",
+                                  systemImage:message.resolved ? "checkmark.circle" : message.read ? "envelope.open" : "envelope.badge")
+                                .font(.caption.weight(.semibold)).foregroundStyle(Color.pawGreen)
+                        }.padding(.vertical,6)
+                    }.accessibilityElement(children:.ignore)
+                        .accessibilityLabel("\(message.title). \(message.sender). Day \(message.day + 1). \(message.resolved ? "Answered" : message.read ? "Read" : "Unread").")
+                        .accessibilityHint("Opens the complete message and available responses.")
                         .accessibilityActions {
                             Button("Mark Read") { store.send(.readMessage(message.id)) }
                             if !message.archived { Button("Archive") { store.send(.archiveMessage(message.id)) } }
@@ -156,7 +186,7 @@ struct StaffDetailView: View {
                     }
                     Section("Development") {
                         Picker("Training course", selection: $course) { ForEach(GameEngine.courses, id: \.self) { Text($0) } }
-                        Act(title: "Arrange Training", icon: "graduationcap", action: .train(id, course), confirmation: "Invest one hundred and twenty pounds in this course?")
+                        Act(title: "Arrange Training", icon: "graduationcap", action: .train(id, course), confirmation: "Invest \(money(store.engine?.trainingPrice ?? 12000)) in this course, including any active trainer agreement discount?")
                         Act(title: "Supportive Check-in", icon: "bubble.left.and.bubble.right", action: .praise(id))
                     }
                     Section("Rota and Leave") {

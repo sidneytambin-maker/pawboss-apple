@@ -2,160 +2,341 @@ import SwiftUI
 import PawBossCore
 
 struct PremisesView: View {
-    @EnvironmentObject private var store: BusinessStore
-    var body: some View {
-        List {
-            if let state = store.state, let catalog = store.catalog {
-                if let area = state.areas.first(where: \.isOutdoor) {
-                    SiteMap(state: state, area: area, catalog: catalog, selectedRow: -1, selectedColumn: -1)
-                        .aspectRatio(1, contentMode: .fit).accessibilityHidden(true)
-                }
-                Section("Your Site") {
-                    ForEach(state.areas) { area in
-                        NavRow(title: area.name, icon: area.isOutdoor ? "leaf" : "house", destination: .area(area.id), detail: "\(area.rows) by \(area.columns). \(area.isOutdoor ? (state.secureBoundary ? "Secure boundary" : "Boundary needs attention") : area.purpose.title).")
-                    }
-                }
-                Section("Maintenance and Growth") {
-                    ValueRow(title: "Cleanliness", value: state.cleanliness >= 80 ? "Clean and well kept" : state.cleanliness >= 60 ? "Cleaning due" : "Deep cleaning needed")
-                    Act(title: "Deep Clean", icon: "sparkles", action: .clean, confirmation: "Spend twelve pounds on additional deep cleaning supplies?")
-                    let repairCost = (try? store.engine?.maintenanceQuote) ?? 0
-                    Act(title: "Maintain Worn Equipment", icon: "wrench.adjustable", action: .maintain, confirmation: "Repair equipment below ninety percent condition for \(money(repairCost))?")
-                        .disabled(repairCost == 0)
-                    NavRow(title: "Readiness", icon: "checklist", destination: .readiness)
-                    Act(title: "Purchase Additional Land", icon: "square.dashed.inset.filled", action: .expandLand, confirmation: "Purchase the next larger plot for three thousand five hundred pounds? Keep a cash reserve, close the site and obtain planning first. A new boundary and inspection will be needed.")
-                }
-            }
-        }.listStyle(.plain).navigationTitle("Premises")
-    }
+    var body: some View { AreaView(id: "outdoor", overview: true) }
 }
+
+private struct GridSelection: Identifiable {
+    let row: Int
+    let column: Int
+    var adding = false
+    var id: String { "\(row)-\(column)" }
+}
+
 struct AreaView: View {
     @EnvironmentObject private var store: BusinessStore
     let id: String
-    @State private var row = 0
-    @State private var column = 0
-    @State private var purpose: RoomUse = .unassigned
-    @State private var itemID = "water"
+    var overview = false
+    @State private var selection: GridSelection?
     @State private var moving: UUID?
-    @State private var remove = false
-    @AccessibilityFocusState private var buildFocused: Bool
+    @State private var removing: UUID?
+    @State private var tools = false
+    @State private var lastSquare: String?
+    @AccessibilityFocusState private var focusedSquare: String?
     private var area: Area? { store.state?.areas.first { $0.id == id } }
+
     var body: some View {
-        List {
+        ScrollView(.vertical) {
             if let area, let state = store.state, let catalog = store.catalog {
-                SiteMap(state: state, area: area, catalog: catalog, selectedRow: row, selectedColumn: column)
-                    .aspectRatio(1, contentMode: .fit).accessibilityHidden(true)
-                Section("Location") {
-                    Picker("Row", selection: $row) { ForEach(0..<area.rows, id: \.self) { Text("\($0 + 1)").tag($0) } }
-                    Picker("Column", selection: $column) { ForEach(0..<area.columns, id: \.self) { Text(String(Character(UnicodeScalar(65 + $0)!))).tag($0) } }
-                    let objects = state.itemsAt(area: area, row: row, column: column, catalog: catalog)
-                    Text(state.squareDescription(area: area, row: row, column: column, catalog: catalog))
-                        .font(.headline).accessibilityIdentifier("selectedSquare")
-                        .accessibilityActions {
-                            Button("Build Here") { buildFocused = true }
-                            if let top = objects.first {
-                                Button("Move") { moving = top.id }
-                                Button("Remove") { remove = true }
+                VStack(alignment: .leading, spacing: 16) {
+                    if overview { roomLinks(state) }
+                    else { Text(area.isOutdoor ? "Outdoor grounds" : area.purpose.title).font(.headline).padding(.horizontal) }
+                    if let moving, let object = area.items.first(where: { $0.id == moving }), let definition = try? catalog.item(object.definitionID) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Moving \(definition.name.lowercased())", systemImage: definition.symbol).font(.headline)
+                            Button("Cancel Move", systemImage: "xmark") { self.moving = nil; store.announce("Move cancelled. The item has not moved.") }
+                        }.padding(.horizontal)
+                    }
+                    ScrollView(.horizontal) {
+                        VStack(spacing: 4) {
+                            ForEach(0..<area.rows, id: \.self) { row in
+                                HStack(spacing: 4) {
+                                    ForEach(0..<area.columns, id: \.self) { column in
+                                        square(area: area, state: state, catalog: catalog, row: row, column: column)
+                                    }
+                                }
                             }
-                        }
-                    ForEach(objects) { object in
-                        if let definition = try? catalog.item(object.definitionID) {
-                            ValueRow(title: definition.name, value: "\(definition.detail) Condition \(object.condition) percent. Weekly running cost \(money(definition.weeklyCost)).")
-                            if definition.layer != .building {
-                                Button("Move \(definition.name)", systemImage: "arrow.up.and.down.and.arrow.left.and.right") { moving = object.id }
-                            }
-                        }
-                    }
-                    if let moving {
-                        Button("Move to \(area.coordinate(row: row, column: column))", systemImage: "checkmark") {
-                            if store.send(.move(moving, id, row, column)) { self.moving = nil }
-                        }
-                        Button("Cancel Move", role: .cancel) { self.moving = nil }
-                    }
-                    if let top = objects.first {
-                        Act(title: "Remove Selected Item", icon: "trash", action: .remove(top.id, id), confirmation: "Remove this item and recover its current resale value? The site must be closed.", destructive: true)
-                    }
+                        }.padding(4)
+                    }.accessibilityIdentifier("premisesGrid")
+                    Text("\(area.columns) columns, \(area.rows) rows").font(.footnote).foregroundStyle(.secondary).padding(.horizontal)
+                }.padding(.vertical, 12)
+            }
+        }
+        .navigationTitle(overview ? "Premises" : area?.name ?? "Area")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Area Options", systemImage: "slider.horizontal.3") { tools = true }.accessibilityIdentifier("areaOptions")
+            }
+        }
+        .sheet(item: $selection, onDismiss: { focusedSquare = lastSquare }) { square in
+            NavigationStack {
+                if square.adding {
+                    EquipmentCatalogueView(areaID: id, row: square.row, column: square.column, onComplete: { selection = nil })
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close", systemImage: "xmark") { selection = nil } } }
+                } else {
+                    SquareInspector(areaID: id, row: square.row, column: square.column,
+                        onMove: { object in beginMove(object); selection = nil },
+                        onRoom: { room in selection = nil; store.path.append(.area(room)) },
+                        onComplete: { selection = nil })
                 }
-                Section("Build Here") {
-                    Picker("Equipment", selection: $itemID) {
-                        ForEach(catalog.items.filter { area.isOutdoor ? $0.outdoors : $0.indoors }) { Text($0.name).tag($0.id) }
-                    }.accessibilityFocused($buildFocused)
-                    if let definition = try? catalog.item(itemID) {
-                        ValueRow(title: "Purchase", value: "\(money(definition.price)). \(definition.width) by \(definition.height). \(definition.detail)")
-                        ValueRow(title: "Ongoing commitment", value: "\(money(definition.weeklyCost)) per week. Typical life \(definition.lifespanDays) game days.")
-                        ValueRow(title: "Cash after purchase", value: "\(money(state.cash - definition.price)). This excludes upcoming wages, rent and care supplies.")
-                        Act(title: "Build \(definition.name)", icon: "hammer", action: .build(itemID, id, row, column), confirmation: "Install \(definition.name.lowercased()) at \(area.coordinate(row: row, column: column)) for \(money(definition.price))?")
-                    }
-                    if area.isOutdoor { Act(title: "Build Missing Perimeter", icon: "rectangle.dashed", action: .buildBoundary, confirmation: "Install missing boundary panels at twenty-five pounds each, keeping existing gates?") }
-                    else { Act(title: "Floor Entire Room", icon: "square.grid.3x3", action: .floorRoom(id), confirmation: "Fit missing washable floor tiles at twelve pounds each? Furniture remains in place.") }
+            }
+        }
+        .sheet(isPresented: $tools) { NavigationStack { AreaOptionsView(id: id) } }
+        .confirmationDialog(removalMessage, isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), titleVisibility: .visible) {
+            if let removing {
+                Button("Remove Item", role: .destructive) { store.send(.remove(removing, id)); self.removing = nil }
+            }
+            Button("Cancel", role: .cancel) { removing = nil }
+        }
+    }
+    private func roomLinks(_ state: BusinessState) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Starter building: two rooms").font(.headline).accessibilityAddTraits(.isHeader)
+            ForEach(state.areas.filter { ["room1", "room2"].contains($0.id) }) { room in
+                NavRow(title: room.name, icon: "door.left.hand.open", destination: .area(room.id),
+                       detail: "\(room.purpose.title). \(room.columns) by \(room.rows).")
+                    .accessibilityIdentifier("roomLink-\(room.id)")
+            }
+            ForEach(state.areas.filter { !$0.isOutdoor && !["room1", "room2"].contains($0.id) }) { room in
+                NavRow(title: room.name, icon: "house.fill", destination: .area(room.id), detail: room.purpose.title)
+            }
+        }.padding(.horizontal)
+    }
+    private func square(area: Area, state: BusinessState, catalog: Catalog, row: Int, column: Int) -> some View {
+        let key = "\(row)-\(column)"
+        let objects = state.itemsAt(area: area, row: row, column: column, catalog: catalog)
+        let building = area.isOutdoor && state.starterBuilding(row: row, column: column)
+        return Button {
+            lastSquare = key
+            if let moving {
+                if store.send(.move(moving, id, row, column)) { self.moving = nil }
+            } else { selection = GridSelection(row: row, column: column) }
+        } label: {
+            SiteSquare(state: state, area: area, catalog: catalog, row: row, column: column,
+                       selected: lastSquare == key, moving: objects.contains { $0.id == moving })
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(state.squareDescription(area: area, row: row, column: column, catalog: catalog))
+        .accessibilityHint(moving != nil ? "Activate to move the selected item here. Cancel Move keeps its original position." : building ? "Open either room in the starter building." : "Activate for square details. Actions include adding an item and managing its contents.")
+        .accessibilityIdentifier("square-\(id)-\(row)-\(column)")
+        .accessibilityFocused($focusedSquare, equals: key)
+        .accessibilityActions {
+            if moving != nil {
+                Button("Move Item Here") {
+                    if let moving, store.send(.move(moving, id, row, column)) { self.moving = nil }
                 }
-                if !area.isOutdoor {
-                    Section("Room Purpose") {
-                        Picker("Use", selection: $purpose) { ForEach(RoomUse.allCases) { Text($0.title).tag($0) } }
-                        Act(title: "Save Room Use", icon: "checkmark", action: .configureRoom(id, purpose))
+            } else if building {
+                Button("Open Room One") { store.path.append(.area("room1")) }
+                Button("Open Room Two") { store.path.append(.area("room2")) }
+            } else {
+                Button("Add Item") { lastSquare = key; selection = GridSelection(row: row, column: column, adding: true) }
+                ForEach(objects) { object in
+                    if let definition = try? catalog.item(object.definitionID), definition.layer != .building {
+                        Button("Move \(definition.name)") { lastSquare = key; beginMove(object.id) }
+                        Button("Remove \(definition.name)") { lastSquare = key; removing = object.id }
                     }
                 }
             }
-        }.listStyle(.plain).navigationTitle(area?.name ?? "Area")
-            .onAppear { purpose = area?.purpose ?? .unassigned }
-            .confirmationDialog("Remove the selected item?", isPresented: $remove, titleVisibility: .visible) {
-                if let area, let state = store.state, let catalog = store.catalog, let top = state.itemsAt(area: area, row: row, column: column, catalog: catalog).first {
-                    Button("Remove", role: .destructive) { store.send(.remove(top.id, id)) }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
+        }
+    }
+    private func beginMove(_ object: UUID) {
+        moving = object
+        let name = area?.items.first { $0.id == object }.flatMap { try? store.catalog?.item($0.definitionID).name } ?? "item"
+        store.announce("Choose a destination square for \(name.lowercased()). Activate that square to move it. Cancel Move leaves it where it is.")
+    }
+    private var removalMessage: String {
+        guard let area, let object = area.items.first(where: { $0.id == removing }), let definition = try? store.catalog?.item(object.definitionID) else { return "Remove this item?" }
+        return "Remove \(definition.name.lowercased()) at \(area.coordinate(row: object.row, column: object.column)) for \(money(definition.price * Pence(object.condition) / 400)) resale? The site must be closed."
     }
 }
-struct SiteMap: View {
+
+private struct SiteSquare: View {
     let state: BusinessState
     let area: Area
     let catalog: Catalog
-    let selectedRow: Int
-    let selectedColumn: Int
-    @Environment(\.colorScheme) private var scheme
+    let row: Int
+    let column: Int
+    let selected: Bool
+    let moving: Bool
+    private var definition: ItemDefinition? {
+        state.itemsAt(area: area, row: row, column: column, catalog: catalog).first.flatMap { try? catalog.item($0.definitionID) }
+    }
+    private var building: Bool { area.isOutdoor && state.starterBuilding(row: row, column: column) }
+    private var background: Color {
+        if building { return Color(red: 0.17, green: 0.40, blue: 0.40) }
+        if definition?.id == "gate" { return .pawGold }
+        if definition?.layer == .boundary { return Color(red: 0.22, green: 0.36, blue: 0.25) }
+        if definition != nil { return Color(red: 0.95, green: 0.97, blue: 0.93) }
+        if area.isOutdoor { return (row + column).isMultiple(of: 2) ? Color(red: 0.64, green: 0.80, blue: 0.42) : Color(red: 0.74, green: 0.87, blue: 0.55) }
+        return (row + column).isMultiple(of: 2) ? Color(red: 0.78, green: 0.86, blue: 0.86) : Color(red: 0.88, green: 0.93, blue: 0.92)
+    }
+    private var foreground: Color { building || (definition?.layer == .boundary && definition?.id != "gate") ? .white : Color(red: 0.10, green: 0.19, blue: 0.13) }
     var body: some View {
-        Canvas { context, size in
-            let cell = min(size.width / Double(area.columns), size.height / Double(area.rows))
-            for row in 0..<area.rows {
-                for column in 0..<area.columns {
-                    let rect = CGRect(x: Double(column) * cell, y: Double(row) * cell, width: cell, height: cell)
-                    let base = area.isOutdoor ? Color(red: 0.71, green: 0.84, blue: 0.60) : Color(red: 0.83, green: 0.88, blue: 0.86)
-                    context.fill(Path(rect.insetBy(dx: 0.7, dy: 0.7)), with: .color(base.opacity((row + column) % 2 == 0 ? 1 : 0.85)))
-                    if area.isOutdoor && state.starterBuilding(row: row, column: column) {
-                        context.fill(Path(rect.insetBy(dx: 0.5, dy: 0.5)), with: .color(Color(red: 0.25, green: 0.47, blue: 0.49)))
+        VStack(spacing: 4) {
+            Text(area.coordinate(row: row, column: column)).font(.system(size: 13, weight: .bold, design: .rounded)).monospaced()
+            Image(systemName: building ? "house.fill" : definition?.symbol ?? (area.isOutdoor ? "leaf" : "square.dashed"))
+                .font(.system(size: 23, weight: .semibold)).frame(height: 26)
+        }
+        .frame(width: 64, height: 68)
+        .foregroundStyle(foreground)
+        .background(background, in: RoundedRectangle(cornerRadius: 5))
+        .overlay { RoundedRectangle(cornerRadius: 5).strokeBorder(moving ? Color.pawCoral : selected ? Color.black : foreground.opacity(0.22), lineWidth: moving || selected ? 3 : 1) }
+        .overlay(alignment: .bottomTrailing) {
+            if let object = state.itemsAt(area: area, row: row, column: column, catalog: catalog).first, object.condition < 45 {
+                Image(systemName: "wrench.fill").font(.system(size: 10)).padding(3).background(Color.pawGold, in: Circle()).foregroundStyle(.black)
+            }
+        }
+    }
+}
+
+private struct SquareInspector: View {
+    @EnvironmentObject private var store: BusinessStore
+    let areaID: String
+    let row: Int
+    let column: Int
+    let onMove: (UUID) -> Void
+    let onRoom: (String) -> Void
+    let onComplete: () -> Void
+    private var area: Area? { store.state?.areas.first { $0.id == areaID } }
+    var body: some View {
+        List {
+            if let area, let state = store.state, let catalog = store.catalog {
+                Text(state.squareDescription(area: area, row: row, column: column, catalog: catalog)).font(.headline)
+                if area.isOutdoor && state.starterBuilding(row: row, column: column) {
+                    ForEach(state.areas.filter { ["room1", "room2"].contains($0.id) }) { room in
+                        Button { onRoom(room.id) } label: { Label("\(room.name): \(room.purpose.title)", systemImage: "door.left.hand.open") }
+                    }
+                } else {
+                    NavigationLink {
+                        EquipmentCatalogueView(areaID: areaID, row: row, column: column, onComplete: onComplete)
+                    } label: { Label("Add Item", systemImage: "plus") }
+                    .accessibilityIdentifier("addItem")
+                    ForEach(state.itemsAt(area: area, row: row, column: column, catalog: catalog)) { object in
+                        if let definition = try? catalog.item(object.definitionID) {
+                            Section(definition.name) {
+                                ValueRow(title: "Condition", value: "\(object.condition) percent. \(money(definition.weeklyCost)) per week.")
+                                Text(definition.detail)
+                                if definition.layer != .building {
+                                    Button { onMove(object.id) } label: { Label("Move \(definition.name)", systemImage: "arrow.up.and.down.and.arrow.left.and.right") }
+                                        .accessibilityIdentifier("move-\(definition.id)")
+                                    Act(title: "Remove \(definition.name)", icon: "trash", action: .remove(object.id, areaID),
+                                        confirmation: "Remove \(definition.name.lowercased()) for \(money(definition.price * Pence(object.condition) / 400)) resale? The site must be closed.", destructive: true)
+                                } else if object.readyDay <= state.day {
+                                    Button("Open Building", systemImage: "door.left.hand.open") { onRoom("room-\(object.id.uuidString)") }
+                                }
+                            }
+                        }
                     }
                 }
             }
-            for item in area.items.sorted(by: { a, b in
-                ((try? catalog.item(a.definitionID).layer) == .ground ? 0 : 1) < ((try? catalog.item(b.definitionID).layer) == .ground ? 0 : 1)
-            }) {
-                guard let definition = try? catalog.item(item.definitionID) else { continue }
-                let rect = CGRect(x: Double(item.column) * cell + 2, y: Double(item.row) * cell + 2, width: Double(definition.width) * cell - 4, height: Double(definition.height) * cell - 4)
-                let color: Color = definition.layer == .ground ? .white.opacity(0.65) : definition.layer == .boundary ? (definition.id == "gate" ? .pawGold : .pawGreen) : item.condition < 45 ? .pawCoral : definition.layer == .building ? .cyan : .white
-                context.fill(Path(roundedRect: rect, cornerRadius: 3), with: .color(color))
-                if definition.layer != .ground && definition.layer != .boundary {
-                    let symbol = icon(definition.id)
-                    var image = context.resolve(Image(systemName: symbol))
-                    image.shading = .color(.black)
-                    context.draw(image, in: rect.insetBy(dx: max(2, cell * 0.18), dy: max(2, cell * 0.18)))
+        }
+        .navigationTitle(area?.coordinate(row: row, column: column) ?? "Square")
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close", systemImage: "xmark", action: onComplete) } }
+    }
+}
+
+private struct EquipmentCatalogueView: View {
+    @EnvironmentObject private var store: BusinessStore
+    let areaID: String
+    let row: Int
+    let column: Int
+    let onComplete: () -> Void
+    @State private var search = ""
+    private var area: Area? { store.state?.areas.first { $0.id == areaID } }
+    private var items: [ItemDefinition] {
+        guard let area, let catalog = store.catalog else { return [] }
+        let essentials = ["fence", "gate", "floor", "water", "bed", "toys", "cleaning", "firstaid"]
+        return catalog.items.filter {
+            (area.isOutdoor ? $0.outdoors : $0.indoors) && (search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || $0.detail.localizedCaseInsensitiveContains(search))
+        }.sorted {
+            let left = essentials.firstIndex(of: $0.id) ?? 100
+            let right = essentials.firstIndex(of: $1.id) ?? 100
+            return left == right ? $0.name < $1.name : left < right
+        }
+    }
+    var body: some View {
+        List {
+            if let area, let state = store.state, let catalog = store.catalog {
+                ForEach(items) { definition in
+                    NavigationLink {
+                        EquipmentPurchaseView(areaID: areaID, row: row, column: column, itemID: definition.id, onComplete: onComplete)
+                    } label: {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: definition.symbol).frame(width: 24).foregroundStyle(Color.pawGreen)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(definition.name).font(.headline)
+                                Text(money(state.placementPrice(definition, area: area, row: row, column: column, catalog: catalog))).font(.subheadline)
+                            }
+                        }.padding(.vertical, 4)
+                    }
+                    .accessibilityLabel("\(definition.name). \(money(state.placementPrice(definition, area: area, row: row, column: column, catalog: catalog))).")
+                    .accessibilityHint("Review the cost, space and ongoing commitment before purchase.")
+                    .accessibilityIdentifier("catalogue-\(definition.id)")
                 }
             }
-            if selectedRow >= 0 {
-                let rect = CGRect(x: Double(selectedColumn) * cell + 1, y: Double(selectedRow) * cell + 1, width: cell - 2, height: cell - 2)
-                context.stroke(Path(rect), with: .color(.black), style: StrokeStyle(lineWidth: 3, dash: [5, 2]))
-            }
-        }.background(scheme == .dark ? Color.black : Color.white)
+        }.searchable(text: $search).navigationTitle("Add Item")
     }
-    private func icon(_ id: String) -> String {
-        if ["snuffle","scentposts","digbox","sensorymat"].contains(id) { return "leaf.fill" }
-        if ["puzzle","trainingkit","lickmat","softplay"].contains(id) { return "puzzlepiece.fill" }
-        if ["retrieve","tunnel","lowhurdles"].contains(id) { return "tennisball.fill" }
-        if ["orthobed","raisedbed","blankets","quietden","privacy","acoustic"].contains(id) { return "bed.double.fill" }
-        if ["coolmat","fan"].contains(id) { return "fan.fill" }
-        if id == "canopy" { return "umbrella.fill" }
-        if ["pawwash","towels","washer","mop","bins","handwash","toywash"].contains(id) { return "sparkles" }
-        if ["locker","breaktable"].contains(id) { return "chair.fill" }
-        if id == "kettle" { return "cup.and.saucer.fill" }
-        if id == "noticeboard" { return "list.bullet.clipboard.fill" }
-        return ["bed": "bed.double.fill", "water": "drop.fill", "toys": "tennisball.fill", "cleaning": "sparkles", "firstaid": "cross.case.fill", "desk": "desktopcomputer", "shade": "umbrella.fill", "agility": "triangle.fill", "garden": "leaf.fill", "grooming": "scissors", "vehicle": "car.fill", "extension": "house.fill", "staffbench": "chair.fill"][id] ?? "square.fill"
+}
+
+private struct EquipmentPurchaseView: View {
+    @EnvironmentObject private var store: BusinessStore
+    let areaID: String
+    let row: Int
+    let column: Int
+    let itemID: String
+    let onComplete: () -> Void
+    @State private var confirm = false
+    var body: some View {
+        List {
+            if let state = store.state, let catalog = store.catalog, let area = state.areas.first(where: { $0.id == areaID }), let definition = try? catalog.item(itemID) {
+                let cost = state.placementPrice(definition, area: area, row: row, column: column, catalog: catalog)
+                Label(definition.name, systemImage: definition.symbol).font(.headline)
+                ValueRow(title: "Purchase", value: "\(money(cost)) at \(area.coordinate(row: row, column: column)). \(definition.width) by \(definition.height) squares.")
+                if cost < definition.price { Text("Includes credit for the fence panel replaced by this gate.") }
+                Text(definition.detail)
+                ValueRow(title: "Ongoing commitment", value: "\(money(definition.weeklyCost)) per week. Typical life \(definition.lifespanDays) game days.")
+                ValueRow(title: "Cash after purchase", value: "\(money(state.cash - cost)). Wages, rent and care supplies still need a reserve.")
+                Button { confirm = true } label: { Label("\(definition.placementVerb) \(definition.name)", systemImage: "plus.circle") }
+                    .accessibilityIdentifier("purchaseItem")
+                    .confirmationDialog("\(definition.placementVerb) \(definition.name.lowercased()) at \(area.coordinate(row: row, column: column)) for \(money(cost))?", isPresented: $confirm, titleVisibility: .visible) {
+                        Button("Confirm \(money(cost))") {
+                            if store.send(.build(itemID, areaID, row, column)) { onComplete() }
+                        }.accessibilityIdentifier("confirmPurchase")
+                        Button("Cancel", role: .cancel) {}
+                    }
+            }
+        }.navigationTitle("Review Item")
+    }
+}
+
+private struct AreaOptionsView: View {
+    @EnvironmentObject private var store: BusinessStore
+    @Environment(\.dismiss) private var dismiss
+    let id: String
+    @State private var purpose: RoomUse = .unassigned
+    var body: some View {
+        Form {
+            if let state = store.state, let catalog = store.catalog, let area = state.areas.first(where: { $0.id == id }) {
+                if area.isOutdoor {
+                    let missing = state.boundaryCells(in: area).filter { r, c in !area.items.contains { $0.row == r && $0.column == c && ["fence", "gate"].contains($0.definitionID) } }.count
+                    if missing > 0 {
+                        let cost = Pence(missing) * ((try? catalog.item("fence").price) ?? 2500)
+                        Act(title: "Build Missing Fence Panels", icon: "rectangle.dashed", action: .buildBoundary, confirmation: "Build \(missing) missing boundary panels for \(money(cost))? Existing gates stay in place.")
+                    }
+                } else {
+                    Picker("Room Purpose", selection: $purpose) { ForEach(RoomUse.allCases) { Text($0.title).tag($0) } }
+                    Act(title: "Save Room Purpose", icon: "checkmark", action: .configureRoom(id, purpose))
+                    let missing = area.rows * area.columns - area.items.filter { $0.definitionID == "floor" }.count
+                    if missing > 0 {
+                        let cost = Pence(missing) * ((try? catalog.item("floor").price) ?? 1200)
+                        Act(title: "Fit Washable Floor", icon: "square.grid.3x3", action: .floorRoom(id), confirmation: "Fit \(missing) missing floor squares for \(money(cost))? Furniture remains in place.")
+                    }
+                }
+                Section("Site Care") {
+                    ValueRow(title: "Cleanliness", value: "\(state.cleanliness) percent")
+                    if state.cleanliness < 100 { Act(title: "Deep Clean", icon: "sparkles", action: .clean, confirmation: "Spend twelve pounds on deep cleaning supplies?") }
+                    let cost = (try? store.engine?.maintenanceQuote) ?? 0
+                    if cost > 0 { Act(title: "Maintain Worn Equipment", icon: "wrench.adjustable", action: .maintain, confirmation: "Repair worn equipment for \(money(cost))?") }
+                    Button("Readiness", systemImage: "checklist") { dismiss(); store.path.append(.readiness) }
+                }
+                if area.isOutdoor {
+                    Section("Growth") {
+                        Act(title: "Purchase Additional Land", icon: "square.dashed.inset.filled", action: .expandLand, confirmation: "Purchase the next plot for three thousand five hundred pounds? Close the site, obtain planning and keep a cash reserve. A new boundary and inspection are required.")
+                    }
+                }
+            }
+        }.navigationTitle("Area Options")
+            .onAppear { purpose = store.state?.areas.first { $0.id == id }?.purpose ?? .unassigned }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close", systemImage: "xmark") { dismiss() } } }
     }
 }

@@ -50,6 +50,9 @@ struct DestinationView: View {
     let destination: Destination
     var body: some View {
         switch destination {
+        case .opening: OpeningGuideView()
+        case .priorities: DailyPrioritiesView()
+        case .partner(let id): PartnerDetailView(id:id)
         case .today: TodayView()
         case .office: OfficeView()
         case .dogs: DogsView()

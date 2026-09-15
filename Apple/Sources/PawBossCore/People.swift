@@ -85,7 +85,8 @@ extension GameEngine {
         let staffing = state.dogs.filter(\.present).count <= state.careCapacity
         let water = state.has("water")
         let support = state.equipmentSupport(for: state.dogs[d])
-        let delta = (rest ? 3 : -4) + (enrichment ? 2 : -2) + (hygiene ? 1 : -8) + (staffing ? 1 : -12) + (water ? 1 : -15) + support.welfare
+        let reviewedCare = rest && hygiene && staffing && water ? state.partnerCareSupport : 0
+        let delta = (rest ? 3 : -4) + (enrichment ? 2 : -2) + (hygiene ? 1 : -8) + (staffing ? 1 : -12) + (water ? 1 : -15) + support.welfare + reviewedCare
         state.dogs[d].welfare = bounded(state.dogs[d].welfare + delta)
         state.dogs[d].stress = bounded(state.dogs[d].stress + (rest && staffing ? -4 : 7) - support.stressRelief)
         state.dogs[d].confidence = bounded(state.dogs[d].confidence + (delta > 0 ? 1 : -3))
@@ -113,7 +114,10 @@ extension GameEngine {
             let price = state.bookings[b].price
             post(price, "\(state.bookings[b].service.title): \(state.dogs[d].name)", kind: .income)
             state.bookings[b].paid = true
-            post(-catalog.economy.dailySuppliesPerDog, "Care supplies: \(state.dogs[d].name)", kind: .expense)
+            let groomingDiscount = state.bookings[b].service == .grooming ? state.activePartner("Groomer")?.terms.supplyDiscount ?? 0 : 0
+            let discount = max(state.supplyDiscount, groomingDiscount)
+            let supplies = catalog.economy.dailySuppliesPerDog * Pence(100 - discount) / 100
+            post(-supplies, "Care supplies: \(state.dogs[d].name)\(discount > 0 ? " (provider agreement)" : "")", kind: .expense)
             post(-max(1, price * 15 / 1000), "Card processing: \(state.dogs[d].name)", kind: .expense)
         }
         state.customers[c].visits += 1
@@ -163,7 +167,7 @@ extension GameEngine {
             return "Promotion confirmed, with a pay rise of one pound fifty per hour."
         case .train(_, let course):
             guard Self.courses.contains(course), !state.staff[i].qualifications.contains(course) else { throw GameError.invalid("Choose a course this employee has not already completed.") }
-            try spend(12000, "\(course) training for \(state.staff[i].name)")
+            try spend(trainingPrice, "\(course) training for \(state.staff[i].name)")
             state.staff[i].qualifications.append(course); state.staff[i].skill = bounded(state.staff[i].skill + 7)
             state.staff[i].morale = bounded(state.staff[i].morale + 4)
             state.staff[i].history.append(Memory(day: state.day, text: "Completed \(course)."))

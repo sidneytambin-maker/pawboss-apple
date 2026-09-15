@@ -2,6 +2,7 @@ import SwiftUI
 import PawBossCore
 
 enum Destination: Hashable {
+    case opening, priorities, partner(String)
     case today, office, dogs, premises, more, customers, staff, recruitment, finance, pricing, loans, business, enquiries, inbox, alerts, bookings, reports, history, community, adviser, settings, help, about, readiness
     case dog(UUID), customer(UUID), employee(UUID), enquiry(UUID), message(UUID), booking(UUID), area(String)
     case dogTask(UUID, DogTask), staffTask(UUID, StaffTask)
@@ -103,7 +104,7 @@ enum Destination: Hashable {
         guard !isWatch, let catalog, !recoveryNeeded else { return }
         do {
             let newState = try catalog.newBusiness(name: name, owner: owner, title: title)
-            try repository.save(newState); state = newState; tab = 0; path = []; inBusiness = true
+            try repository.save(newState); state = newState; tab = 0; path = [.opening]; inBusiness = true
             sync?.publish(newState); announce("\(name) created. Your business starts with savings and no debt.")
         } catch { errorMessage = error.localizedDescription }
     }
@@ -143,6 +144,7 @@ enum Destination: Hashable {
         let destination = path.last ?? (isWatch ? watchSection : [.today, .office, .dogs, .premises, .more][min(4, max(0, tab))])
         let scene: Soundscape
         switch destination {
+        case .premises: scene = .outdoors(weather: state?.weather ?? "")
         case .area(let id):
             if id == "outdoor" { scene = .outdoors(weather: state?.weather ?? "") }
             else { scene = state?.areas.first(where: { $0.id == id })?.purpose == .reception ? .office : .care }
