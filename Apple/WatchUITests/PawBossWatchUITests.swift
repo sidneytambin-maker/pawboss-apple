@@ -1,6 +1,10 @@
 import XCTest
 
 final class PawBossWatchUITests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+    }
     func launch(seed: Bool) -> XCUIApplication {
         let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--reset-test-game"]
         if seed { app.launchArguments.append("--seed-business") }
@@ -14,14 +18,16 @@ final class PawBossWatchUITests: XCTestCase {
     }
     func reach(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 30) {
         for _ in 0..<attempts {
-            if element.exists && element.isHittable { return }
-            // Use a standard swipe inside the content, not the Watch's rounded edge
-            // or its scroll-indicator window. Sliders have their own adjustment screens.
+            // Native tap scrolls an existing offscreen control into view. Searching
+            // beyond it can discard a lazily loaded row and miss it entirely.
+            if element.exists { return }
             let content = app.collectionViews.firstMatch.exists ? app.collectionViews.firstMatch : app.scrollViews.firstMatch
             let surface = content.exists ? content : app.windows.element(boundBy: 0)
-            surface.swipeUp(velocity: .slow)
+            let start = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+            let end = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.15)
         }
-        XCTAssertTrue(element.exists && element.isHittable, "Control not reached: \(element)")
+        XCTAssertTrue(element.exists, "Control not found: \(element)")
     }
     func testWatchPremisesSquaresOpenItemCatalogue() {
         let app = launch(seed: true); openMenu(app)
@@ -35,7 +41,11 @@ final class PawBossWatchUITests: XCTestCase {
         let addItem = app.buttons["addItem"]; reach(addItem, in: app); addItem.tap()
         let water = app.buttons["catalogue-water"]; reach(water, in: app); water.tap()
         let purchase = app.buttons["purchaseItem"]; reach(purchase, in: app)
-        XCTAssertTrue(purchase.label.contains("Place"))
+        XCTAssertTrue(purchase.label.contains("Place")); purchase.tap()
+        let confirmation = app.buttons.matching(identifier: "confirmPurchase").firstMatch
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 5)); XCTAssertTrue(confirmation.isEnabled)
+        app.buttons.matching(identifier: "Cancel").firstMatch.tap()
+        XCTAssertTrue(purchase.waitForExistence(timeout: 5))
     }
     func testWaitingStateHasRefreshNotFakeBusiness() {
         let app = launch(seed: false)
