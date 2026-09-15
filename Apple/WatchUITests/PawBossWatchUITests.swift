@@ -85,8 +85,16 @@ final class PawBossWatchUITests: XCTestCase {
         let more = app.buttons["More"]; reach(more, in: app); more.tap()
         let settings = app.buttons["Settings and Sync"]; reach(settings, in: app); settings.tap()
         for category in ["Music", "Ambience", "Dogs", "Customers", "Office", "Gameplay"] {
-            let volume = app.sliders["volume-\(category)"]; reach(volume, in: app)
+            let choice = app.buttons["volumeSettings-\(category)"]; reach(choice, in: app); choice.tap()
+            let volume = app.sliders["volume-\(category)"]
+            XCTAssertTrue(volume.waitForExistence(timeout: 5)); XCTAssertTrue(volume.isHittable)
             XCTAssertTrue(String(describing: volume.value ?? "").contains("50"), "Default volume for \(category)")
+            XCTAssertTrue(app.buttons["Preview Sounds"].isHittable)
+            if category == "Music" {
+                let attachment = XCTAttachment(screenshot: app.screenshot())
+                attachment.name = "watch-volume-control"; attachment.lifetime = .keepAlways; add(attachment)
+            }
+            app.navigationBars.buttons.matching(identifier: "BackButton").firstMatch.tap()
         }
         let library = app.buttons["Sound Library"]; reach(library, in: app); library.tap()
         XCTAssertTrue(app.buttons["stopAudioPreview"].waitForExistence(timeout: 5))

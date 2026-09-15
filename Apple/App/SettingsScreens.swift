@@ -14,13 +14,22 @@ struct SettingsView: View {
             }
             Section("Audio") {
                 ForEach(AudioMix.categories, id: \.self) { category in
-                    VStack(alignment: .leading) {
-                        HStack { Text(category).font(.headline); Spacer(); Text("\(Int((AudioMix.gain(category, volumes: store.preferences.volumes) * 100).rounded()))%").monospacedDigit() }.accessibilityHidden(true)
-                        Slider(value: Binding(get: { AudioMix.gain(category, volumes: store.preferences.volumes) }, set: { store.preferences.volumes[category] = $0; store.savePreferences() }), in: 0...1, step: 0.05)
-                            .accessibilityLabel("\(category) volume")
-                            .accessibilityValue("\(Int((store.preferences.volumes[category, default: 0] * 100).rounded())) percent")
-                            .accessibilityIdentifier("volume-\(category)")
+                    #if os(watchOS)
+                    NavigationLink {
+                        WatchVolumeView(category: category)
+                    } label: {
+                        HStack {
+                            Text(category)
+                            Spacer()
+                            Text("\(Int((AudioMix.gain(category, volumes: store.preferences.volumes) * 100).rounded()))%").monospacedDigit()
+                        }
                     }
+                    .accessibilityLabel("\(category) volume")
+                    .accessibilityValue("\(Int((AudioMix.gain(category, volumes: store.preferences.volumes) * 100).rounded())) percent")
+                    .accessibilityIdentifier("volumeSettings-\(category)")
+                    #else
+                    VolumeControl(category: category)
+                    #endif
                 }
                 Button("Reset all volumes to 50 percent", systemImage: "arrow.counterclockwise") { store.preferences.volumes = AudioMix.defaults; store.savePreferences(); store.announce("All six volumes set to 50 percent.") }
                 NavigationLink("Sound Library", destination: SoundLibraryView())
@@ -61,6 +70,31 @@ struct SettingsView: View {
             .onChange(of: store.preferences.haptics) { _, _ in store.savePreferences() }
     }
 }
+private struct VolumeControl: View {
+    @EnvironmentObject private var store: BusinessStore
+    let category: String
+    private var percent: Int { Int((AudioMix.gain(category, volumes: store.preferences.volumes) * 100).rounded()) }
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack { Text(category).font(.headline); Spacer(); Text("\(percent)%").monospacedDigit() }.accessibilityHidden(true)
+            Slider(value: Binding(get: { AudioMix.gain(category, volumes: store.preferences.volumes) }, set: { store.preferences.volumes[category] = $0; store.savePreferences() }), in: 0...1, step: 0.05)
+                .accessibilityLabel("\(category) volume")
+                .accessibilityValue("\(percent) percent")
+                .accessibilityIdentifier("volume-\(category)")
+        }
+    }
+}
+#if os(watchOS)
+private struct WatchVolumeView: View {
+    let category: String
+    var body: some View {
+        List {
+            VolumeControl(category: category)
+            NavigationLink("Preview Sounds", destination: SoundLibraryView(category: category))
+        }.listStyle(.plain).navigationTitle(category)
+    }
+}
+#endif
 struct HelpView: View {
     @State private var search = ""
     private let topics: [(String, String)] = [
@@ -102,11 +136,12 @@ struct AboutView: View {
 }
 struct SoundLibraryView: View {
     @EnvironmentObject private var store: BusinessStore
+    var category: String? = nil
     var body: some View {
         List {
             Button("Stop Preview", systemImage: "stop.circle") { store.feedback.stopPreview() }
                 .accessibilityIdentifier("stopAudioPreview")
-            ForEach(AudioMix.categories, id: \.self) { category in
+            ForEach(AudioMix.categories.filter { category == nil || $0 == category }, id: \.self) { category in
                 Section(category) {
                     ForEach(store.feedback.library.assets.filter { $0.category == category }) { asset in
                         Button("Preview \(asset.title)", systemImage: "play.circle") { store.feedback.preview(asset.id) }
