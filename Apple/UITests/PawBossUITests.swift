@@ -91,7 +91,10 @@ final class PawBossUITests: XCTestCase {
         var checked = Set<String>()
         for _ in 0..<16 {
             let viewport = app.frame
-            let bars = app.tabBars.allElementsBoundByIndex.map(\.frame) + app.navigationBars.allElementsBoundByIndex.map(\.frame) + XCUIApplication(bundleIdentifier: "com.apple.springboard").statusBars.allElementsBoundByIndex.map(\.frame)
+            // The floating tab bar's edge fade extends beyond its accessibility frame.
+            // Defer those labels until fully clear, then require a successful audit below.
+            let tabOverlays = app.tabBars.allElementsBoundByIndex.map { $0.frame.insetBy(dx: 0, dy: -24) }
+            let bars = tabOverlays + app.navigationBars.allElementsBoundByIndex.map(\.frame) + XCUIApplication(bundleIdentifier: "com.apple.springboard").statusBars.allElementsBoundByIndex.map(\.frame)
             let headings = ["todayCareHeading", "businessPulseHeading"].map { app.staticTexts[$0] }.filter(\.exists).map { (id: $0.identifier, frame: $0.frame) }
             func obscured(_ frame: CGRect, identifier: String) -> Bool {
                 !viewport.contains(frame) || bars.contains(where: { $0.intersects(frame) }) || headings.contains(where: { $0.id != identifier && $0.frame.intersects(frame) })
