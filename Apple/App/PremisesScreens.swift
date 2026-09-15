@@ -25,8 +25,10 @@ struct AreaView: View {
     private var area: Area? { store.state?.areas.first { $0.id == id } }
 
     var body: some View {
+        GeometryReader { geometry in
         ScrollView(.vertical) {
             if let area, let state = store.state, let catalog = store.catalog {
+                let tileWidth = max(64, min(104, (geometry.size.width - 8 - CGFloat(area.columns - 1) * 4) / CGFloat(area.columns)))
                 VStack(alignment: .leading, spacing: 16) {
                     if overview {
                         HStack {
@@ -38,7 +40,18 @@ struct AreaView: View {
                         }.padding(.horizontal)
                         roomLinks(state)
                     }
-                    else { Text(area.isOutdoor ? "Outdoor grounds" : area.purpose.title).font(.headline).padding(.horizontal) }
+                    else {
+                        HStack {
+                            Text(area.isOutdoor ? "Outdoor grounds" : area.purpose.title).font(.headline)
+                            #if os(watchOS)
+                            Spacer()
+                            Button { tools = true } label: {
+                                Image(systemName: "slider.horizontal.3").font(.body).foregroundStyle(Color.pawGreen)
+                            }.buttonStyle(.plain).frame(minWidth: 44, minHeight: 44)
+                                .accessibilityLabel("Area Options").accessibilityIdentifier("areaOptions")
+                            #endif
+                        }.padding(.horizontal)
+                    }
                     if let moving, let object = area.items.first(where: { $0.id == moving }), let definition = try? catalog.item(object.definitionID) {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Moving \(definition.name.lowercased())", systemImage: definition.symbol).font(.headline)
@@ -50,17 +63,19 @@ struct AreaView: View {
                             ForEach(0..<area.rows, id: \.self) { row in
                                 HStack(spacing: 4) {
                                     ForEach(0..<area.columns, id: \.self) { column in
-                                        square(area: area, state: state, catalog: catalog, row: row, column: column)
+                                        square(area: area, state: state, catalog: catalog, row: row, column: column, width: tileWidth)
                                     }
                                 }
                             }
-                        }.padding(4)
+                        }.frame(minWidth: max(0, geometry.size.width - 8)).padding(4)
                     }.accessibilityIdentifier("premisesGrid")
                     Text("\(area.columns) columns, \(area.rows) rows").font(.footnote).foregroundStyle(.secondary).padding(.horizontal)
                 }.padding(.vertical, 12)
             }
         }
+        }
         .navigationTitle(overview ? "Premises" : area?.name ?? "Area")
+        #if os(iOS)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if !overview {
@@ -70,6 +85,7 @@ struct AreaView: View {
                 }
             }
         }
+        #endif
         .sheet(item: $selection, onDismiss: { focusedSquare = lastSquare }) { square in
             NavigationStack {
                 if square.adding {
@@ -104,7 +120,7 @@ struct AreaView: View {
             }
         }.padding(.horizontal)
     }
-    private func square(area: Area, state: BusinessState, catalog: Catalog, row: Int, column: Int) -> some View {
+    private func square(area: Area, state: BusinessState, catalog: Catalog, row: Int, column: Int, width: CGFloat) -> some View {
         let key = "\(row)-\(column)"
         let objects = state.itemsAt(area: area, row: row, column: column, catalog: catalog)
         let building = area.isOutdoor && state.starterBuilding(row: row, column: column)
@@ -115,7 +131,7 @@ struct AreaView: View {
             } else { selection = GridSelection(row: row, column: column) }
         } label: {
             SiteSquare(state: state, area: area, catalog: catalog, row: row, column: column,
-                       selected: lastSquare == key, moving: objects.contains { $0.id == moving })
+                       selected: lastSquare == key, moving: objects.contains { $0.id == moving }, width: width)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(state.squareDescription(area: area, row: row, column: column, catalog: catalog))
@@ -160,6 +176,7 @@ private struct SiteSquare: View {
     let column: Int
     let selected: Bool
     let moving: Bool
+    let width: CGFloat
     private var definition: ItemDefinition? {
         state.itemsAt(area: area, row: row, column: column, catalog: catalog).first.flatMap { try? catalog.item($0.definitionID) }
     }
@@ -194,7 +211,7 @@ private struct SiteSquare: View {
                 .font(.system(size: 23, weight: .semibold)).frame(height: 26)
                 .opacity(symbol == nil ? 0 : 1).accessibilityHidden(true)
         }
-        .frame(width: 64, height: 68)
+        .frame(width: width, height: width + 4)
         .foregroundStyle(foreground)
         .background(background, in: RoundedRectangle(cornerRadius: 5))
         .overlay { RoundedRectangle(cornerRadius: 5).strokeBorder(moving ? Color.pawCoral : selected ? Color.black : foreground.opacity(0.22), lineWidth: moving || selected ? 3 : 1) }

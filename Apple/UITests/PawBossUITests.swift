@@ -66,6 +66,7 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(target.waitForExistence(timeout: 5)); target.tap()
         XCTAssertEqual(first.label, "A1. Empty.")
         XCTAssertEqual(target.label, "A2. Water bowl.")
+        Thread.sleep(forTimeInterval: 0.5)
         screenshot("room-water-moved", app: app)
     }
     func testThreeDailyPriorityPickersCanAlwaysSaveUniqueChoices() {
