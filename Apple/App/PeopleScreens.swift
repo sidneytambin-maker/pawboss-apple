@@ -59,8 +59,9 @@ struct InboxView: View {
             NavRow(title:"Daily Priorities", icon:"list.number", destination:.priorities)
             Picker("Show", selection: $filter) { ForEach(["All", "Unread", "Needs a Response", "Complaints", "Reviews", "Archived"], id: \.self) { Text($0) } }
             if let state = store.state {
-                let unread = state.messages.filter { !$0.read && !$0.archived }.count
-                let waiting = state.messages.filter { !$0.archived && !$0.resolved && [.message,.complaint,.review,.referral].contains($0.kind) }.count
+                let source = state.messages.filter { !onlyAlerts || (!$0.resolved && [.complaint, .inspection, .staff].contains($0.kind)) }
+                let unread = source.filter { !$0.read && !$0.archived }.count
+                let waiting = source.filter { !$0.archived && !$0.resolved && [.message,.complaint,.review,.referral].contains($0.kind) }.count
                 ViewThatFits(in: .horizontal) {
                     HStack {
                         Label("\(unread) unread", systemImage:"envelope.badge").foregroundStyle(Color.pawGreen)
@@ -94,8 +95,7 @@ struct InboxView: View {
                                   systemImage:message.resolved ? "checkmark.circle" : message.read ? "envelope.open" : "envelope.badge")
                                 .font(.caption.weight(.semibold)).foregroundStyle(Color.pawGreen)
                         }.padding(.vertical,6)
-                    }.accessibilityElement(children:.ignore)
-                        .accessibilityLabel("\(message.title). \(message.sender). Day \(message.day + 1). \(message.resolved ? "Answered" : message.read ? "Read" : "Unread").")
+                    }.accessibilityLabel("\(message.title). \(message.sender). Day \(message.day + 1). \(message.resolved ? "Answered" : message.read ? "Read" : "Unread").")
                         .accessibilityHint("Opens the complete message and available responses.")
                         .accessibilityActions {
                             Button("Mark Read") { store.send(.readMessage(message.id)) }

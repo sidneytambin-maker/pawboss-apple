@@ -28,7 +28,16 @@ struct AreaView: View {
         ScrollView(.vertical) {
             if let area, let state = store.state, let catalog = store.catalog {
                 VStack(alignment: .leading, spacing: 16) {
-                    if overview { roomLinks(state) }
+                    if overview {
+                        HStack {
+                            Text("Outdoor grounds").font(.headline).accessibilityAddTraits(.isHeader)
+                            Spacer()
+                            Button("Area Options", systemImage: "slider.horizontal.3") { tools = true }
+                                .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
+                                .accessibilityIdentifier("areaOptions")
+                        }.padding(.horizontal)
+                        roomLinks(state)
+                    }
                     else { Text(area.isOutdoor ? "Outdoor grounds" : area.purpose.title).font(.headline).padding(.horizontal) }
                     if let moving, let object = area.items.first(where: { $0.id == moving }), let definition = try? catalog.item(object.definitionID) {
                         VStack(alignment: .leading, spacing: 8) {
@@ -54,7 +63,9 @@ struct AreaView: View {
         .navigationTitle(overview ? "Premises" : area?.name ?? "Area")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Area Options", systemImage: "slider.horizontal.3") { tools = true }.accessibilityIdentifier("areaOptions")
+                if !overview {
+                    Button("Area Options", systemImage: "slider.horizontal.3") { tools = true }.accessibilityIdentifier("areaOptions")
+                }
             }
         }
         .sheet(item: $selection, onDismiss: { focusedSquare = lastSquare }) { square in
@@ -105,7 +116,6 @@ struct AreaView: View {
                        selected: lastSquare == key, moving: objects.contains { $0.id == moving })
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.squareDescription(area: area, row: row, column: column, catalog: catalog))
         .accessibilityHint(moving != nil ? "Activate to move the selected item here. Cancel Move keeps its original position." : building ? "Open either room in the starter building." : "Activate for square details. Actions include adding an item and managing its contents.")
         .accessibilityIdentifier("square-\(id)-\(row)-\(column)")
@@ -152,6 +162,20 @@ private struct SiteSquare: View {
         state.itemsAt(area: area, row: row, column: column, catalog: catalog).first.flatMap { try? catalog.item($0.definitionID) }
     }
     private var building: Bool { area.isOutdoor && state.starterBuilding(row: row, column: column) }
+    private var object: PlacedItem? { state.itemsAt(area: area, row: row, column: column, catalog: catalog).first }
+    private var symbol: String? {
+        if building {
+            if row == 4 && column == 2 { return "1.square.fill" }
+            if row == 4 && column == 6 { return "2.square.fill" }
+            return nil
+        }
+        if let object, let definition, definition.width > 1 || definition.height > 1 {
+            if row != object.row || column != object.column {
+                return row == object.row ? "arrow.left" : column == object.column ? "arrow.up" : "arrow.up.left"
+            }
+        }
+        return definition?.symbol ?? (area.isOutdoor ? "leaf" : "square.dashed")
+    }
     private var background: Color {
         if building { return Color(red: 0.17, green: 0.40, blue: 0.40) }
         if definition?.id == "gate" { return .pawGold }
@@ -164,8 +188,9 @@ private struct SiteSquare: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(area.coordinate(row: row, column: column)).font(.system(size: 13, weight: .bold, design: .rounded)).monospaced()
-            Image(systemName: building ? "house.fill" : definition?.symbol ?? (area.isOutdoor ? "leaf" : "square.dashed"))
+            Image(systemName: symbol ?? "square.fill")
                 .font(.system(size: 23, weight: .semibold)).frame(height: 26)
+                .opacity(symbol == nil ? 0 : 1).accessibilityHidden(true)
         }
         .frame(width: 64, height: 68)
         .foregroundStyle(foreground)
