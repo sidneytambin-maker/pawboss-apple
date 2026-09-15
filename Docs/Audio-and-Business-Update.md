@@ -33,4 +33,6 @@ Audio-Sources.json records author, source page, free download and licence. The b
 
 ## Verification boundary
 
+Native run 34975608698 passed 77 shared, 10 iPhone screen and six Watch screen tests, plus physical-target Release compilation and archive checks. Fifteen local release-safety tests also passed. Apple approved build 2 for external TestFlight testing; see TESTFLIGHT.md for the verified publication details.
+
 The import decodes each asset and rejects silence or clipping after AAC mastering. Archive and signing checks require every audio file and the licence manifest to match tested source. Native tests cover controls and gameplay, but cannot judge perceived sound quality, physical Watch output or a complete VoiceOver listening experience. Physical listening remains required.

@@ -47,7 +47,19 @@ Native evidence is retained locally in ignored `Artifacts/Run34912120697`. Signi
 
 The build-1 review follow-up is paused after approval, public-page verification and the successful email. The ignored public-link-email.json receipt records completion to prevent duplicate mail.
 
-Build 2 is in development. Run 34953774473 passed 57 core tests, nine iPhone UI tests and physical iPhone/Watch compilation, but failed a Watch audio navigation test. It is not a release candidate. The new premises-grid, onboarding, priority and provider changes need a fresh complete native run before signing or upload.
+## Build 2 Release
+
+- Native run 34975608698 passed at revision ca5793d9353ee9131fe9d15802ad62a010aa38e2: 77 shared tests, 10 iPhone UI tests, six Watch UI tests, both physical Release targets and archive validation. There were no failed or skipped screen tests.
+- The tests exercise grid descriptions, item placement/movement, Watch purchase confirmation and cancellation, all six Watch volume screens, individual sound previews, priority saving and large-text accessibility.
+- Fifteen local signing/upload safety tests also passed. Native screenshots were inspected, including the wider room grid, Watch controls and audio library.
+- Version 0.1.0 (2) was signed locally. Independent inspection verified both CMS signers, distribution profiles/entitlements, unchanged native code and complete resource seals. The Watch app remains at `Watch/PawBossWatch.app`.
+- IPA SHA-256: 8af5534ccb00be8a1b83047b4e55a343cadf6b1488cbb649c5a5103670e02f4a.
+- Apple upload 02753594-934d-457f-829d-f10cb46f0120 received all 13 parts with verified checksums and completed without errors or warnings. The matching Apple build is VALID.
+- Beta App Review is APPROVED. Internal and external states are both IN_BETA_TESTING; both existing groups contain build 2. Account-holder access was verified and automatic tester notifications are enabled.
+- The external group's public link remains enabled: https://testflight.apple.com/join/WU2jJvtN. Build 2 is available through that same shareable link, which was already emailed to the owner. No duplicate link email was sent.
+- Native evidence: ignored `Artifacts/Run34975608698`. Signed package and upload receipts: ignored `Artifacts/Release-0.1.0-2-verified`.
+
+Earlier failed or cancelled runs were not signed or uploaded. Do not distribute their artifacts. Build 1 remains historical release evidence; build 2 is the current verified external beta. No review follow-up is pending, and the completed heartbeat remains paused.
 
 ## Known Beta Boundaries
 
