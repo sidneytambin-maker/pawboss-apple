@@ -29,7 +29,7 @@ extension GameEngine {
         }
         let attendance = state.bookings.filter { $0.day == day && $0.status == .completed }.count
         state.cleanliness = bounded(state.cleanliness - attendance * 2 - (state.weather == "Heavy rain" ? attendance : 0) + (state.priorities.contains("cleaning") ? 8 : 0))
-        if attendance > 0 && state.priorities.contains("cleaning") { post(-300 - attendance * 40, "Daily cleaning and laundry", kind: .expense) }
+        if attendance > 0 && state.priorities.contains("cleaning") { post(-300 - Pence(attendance) * 40, "Daily cleaning and laundry", kind: .expense) }
         for i in state.staff.indices where state.staff[i].employed {
             let onDuty = state.staff[i].onDuty(day: day)
             let pressure = attendance >= max(1, state.careCapacity) ? 4 : -2
