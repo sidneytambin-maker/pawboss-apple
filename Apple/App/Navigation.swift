@@ -112,7 +112,7 @@ struct ValueRow: View {
     let value: String
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.subheadline).foregroundStyle(.secondary)
+            Text(title).font(.subheadline).foregroundStyle(Color.primary)
             Text(value).font(.body.weight(.medium)).fixedSize(horizontal: false, vertical: true)
         }.padding(.vertical, 3).accessibilityElement(children: .ignore).accessibilityLabel("\(title). \(value)")
             .accessibilityAddTraits(.isStaticText)

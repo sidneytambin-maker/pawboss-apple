@@ -1,6 +1,7 @@
 import Foundation
 
-public typealias Pence = Int
+// Physical watchOS targets can use 32-bit Int; currency must match iPhone saves.
+public typealias Pence = Int64
 public func money(_ pence: Pence) -> String {
     (Double(pence) / 100).formatted(.currency(code: "GBP").locale(Locale(identifier: "en_GB")))
 }

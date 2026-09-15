@@ -65,13 +65,13 @@ extension GameEngine {
             if facilityCost > 0 { post(-facilityCost, "Facilities running costs", kind: .expense) }
         }
         if (day + 1) % 30 == 0 {
-            let inflation = 100 + (day / 365) * 3
+            let inflation = Pence(100 + (day / 365) * 3)
             post(-catalog.economy.monthlyRent * inflation / 100, "Monthly premises rent", kind: .expense)
             let winter = [11, 12, 1, 2].contains(Calendar.pawBoss.component(.month, from: state.date))
             post(-catalog.economy.monthlyUtilities * (winter ? 125 : 100) * inflation / 10000, "Monthly utilities and administration\(winter ? ", including winter heating" : "")", kind: .expense)
         }
         if let due = state.loan.nextPaymentDay, due <= day, state.loan.principal > 0 {
-            let interest = state.loan.principal * catalog.economy.loanAPRPercent / 1200
+            let interest = state.loan.principal * Pence(catalog.economy.loanAPRPercent) / 1200
             post(-interest, "Monthly loan interest", kind: .expense); state.loan.interestPaid += interest
             let principal = min(state.loan.principal, max(5000, state.loan.original / 36))
             post(-principal, "Monthly loan principal repayment", kind: .principal)
@@ -113,13 +113,13 @@ extension GameEngine {
         let activeCampaign = (state.marketingUntilDay ?? -1) >= state.day
         let referrals = state.customers.contains { $0.trust >= 75 }
         let localPartner = state.eventLastDays.contains { $0.key.hasPrefix("partner-") && $0.value > state.day - 30 }
-        let sensiblePrice = state.prices[Service.dayCare.rawValue, default: 3500] <= catalog.economy.prices[Service.dayCare.rawValue, default: 3500] * (140 + state.reputation) / 100
+        let sensiblePrice = state.prices[Service.dayCare.rawValue, default: 3500] <= catalog.economy.prices[Service.dayCare.rawValue, default: 3500] * Pence(140 + state.reputation) / 100
         if state.pendingEnquiries.count < 12 && sensiblePrice && (activeCampaign || (referrals && state.random(3) == 0) || (localPartner && state.random(4) == 0)) {
             generateEnquiry(source: activeCampaign ? "Local introduction campaign" : referrals ? "Customer recommendation" : "Community partner")
         }
         if state.day % 7 == 0 {
             for i in state.world.indices where state.world[i].category == "Competitor" {
-                state.world[i].price = max(2000, state.world[i].price + state.random(201) - 100)
+                state.world[i].price = max(2000, state.world[i].price + Pence(state.random(201)) - 100)
                 state.world[i].reputation = bounded(state.world[i].reputation + state.random(5) - 2)
             }
             state.messages.append(Message(day: state.day, sender: "Weekly briefing", title: "Welcome to Week \(state.week)", body: adviser, kind: .report))
@@ -134,7 +134,7 @@ extension GameEngine {
             guard let joined = member.joinedDay else { return total }
             let end = min(day, (member.leftDay ?? (day + 1)) - 1)
             let paidDays = max(0, end - max(day - 6, joined) + 1)
-            let wage = member.hourlyPay * member.hoursPerWeek * paidDays / 7
+            let wage = member.hourlyPay * Pence(member.hoursPerWeek) * Pence(paidDays) / 7
             return total + wage + max(0, wage - 9615) * 15 / 100 + max(0, wage - 12000) * 3 / 100
         }
     }

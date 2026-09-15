@@ -182,7 +182,7 @@ enum MoneyInput {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard clean.range(of: "^[0-9]{1,7}(\\.[0-9]{1,2})?$", options: .regularExpression) != nil,
               let decimal = Decimal(string: clean, locale: Locale(identifier: "en_GB")) else { return nil }
-        return NSDecimalNumber(decimal: decimal * 100).intValue
+        return NSDecimalNumber(decimal: decimal * 100).int64Value
     }
     static func edit(_ pence: Pence) -> String { String(format: "%.2f", Double(pence) / 100) }
 }

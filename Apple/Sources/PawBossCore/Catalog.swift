@@ -53,7 +53,7 @@ public struct Catalog: Codable {
             let roles = StaffRole.allCases
             let role = roles[index % roles.count]
             state.staff.append(StaffMember(name: "\(firstNames[(index + 11) % firstNames.count]) \(surnames[(index + 7) % surnames.count])",
-                age: 23 + index * 3, role: role, hourlyPay: economy.minimumHourlyPay + index * 65,
+                age: 23 + index * 3, role: role, hourlyPay: economy.minimumHourlyPay + Pence(index) * 65,
                 hoursPerWeek: [.cleaner, .reception].contains(role) ? 15 : 25, skill: 52 + index * 5,
                 strength: index % 2 == 0 ? "Patient with nervous dogs" : "Clear, reassuring customer communication",
                 development: index % 2 == 0 ? "Would like to develop leadership skills" : "Would like more behaviour training",

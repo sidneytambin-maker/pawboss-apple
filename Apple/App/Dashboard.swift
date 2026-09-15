@@ -21,7 +21,7 @@ struct TodayView: View {
                         NavRow(title: dog.name, icon: "heart.text.square", destination: .dog(dog.id), detail: "Care record needs attention")
                     }
                 } header: {
-                    Text("Today's Care").foregroundStyle(.primary)
+                    Text("Today's Care").foregroundStyle(Color.primary)
                         .frame(maxWidth: .infinity, alignment: .leading).background(.background)
                         .accessibilityIdentifier("todayCareHeading")
                 }
@@ -35,7 +35,7 @@ struct TodayView: View {
                     if state.areas.flatMap(\.items).contains(where: { $0.condition < 60 }) { NavRow(title: "Maintenance due", icon: "wrench.adjustable", destination: .premises) }
                     if let inspection = state.licence.inspectionDay { NavRow(title: "Council inspection", icon: "checkmark.seal", destination: .readiness, detail: "In \(inspection - state.day) game days") }
                 } header: {
-                    Text("Business Pulse").foregroundStyle(.primary)
+                    Text("Business Pulse").foregroundStyle(Color.primary)
                         .frame(maxWidth: .infinity, alignment: .leading).background(.background)
                         .accessibilityIdentifier("businessPulseHeading")
                 }

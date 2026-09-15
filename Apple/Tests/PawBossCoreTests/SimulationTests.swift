@@ -222,6 +222,19 @@ final class SimulationTests: XCTestCase {
         let cash = loaded.state.cash; _ = loaded.apply(command)
         XCTAssertEqual(loaded.state.cash, cash)
     }
+    func testMoneyUses64BitStorageAndPreservesLargeBalances() throws {
+        XCTAssertEqual(MemoryLayout<Pence>.size, 8)
+        var engine = try fresh()
+        let capital: Pence = 3_000_000_000
+        engine.post(capital, "Test capital", kind: .investment)
+        try engine.validate()
+        let encoded = try JSONEncoder().encode(SaveEnvelope(business: engine.state))
+        let restored = try FileBusinessRepository.decode(encoded)
+        XCTAssertEqual(restored.cash, engine.catalog.economy.initialCash + capital)
+        XCTAssertEqual(restored.ledger.last?.amount, capital)
+        XCTAssertNoThrow(try GameEngine(state: restored, catalog: engine.catalog))
+        XCTAssertEqual(try JSONDecoder().decode(Pence.self, from: Data("3000000000".utf8)), capital)
+    }
     func testCorruptSaveDoesNotOverwriteGoodBackup() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: dir) }
@@ -308,7 +321,7 @@ final class SimulationTests: XCTestCase {
         XCTAssertEqual(engine.state.areas[2].items[1].condition, 95)
     }
     func testLegacyExtremeBalanceIsRejectedWithoutIntegerTrap() throws {
-        var state = try fresh().state; state.cash = Int.min
+        var state = try fresh().state; state.cash = Pence.min
         var legacy = SaveEnvelope(business: state); legacy.version = 1
         XCTAssertThrowsError(try FileBusinessRepository.decode(JSONEncoder().encode(legacy)))
     }

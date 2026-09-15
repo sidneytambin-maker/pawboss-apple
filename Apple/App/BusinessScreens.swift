@@ -132,15 +132,15 @@ struct ReportsView: View {
                             .accessibilityLabel("Business day \(report.day + 1)")
                             .accessibilityValue(spoken(report))
                     }.frame(height: store.isWatch ? 130 : 220).accessibilityLabel("\(metric) trend").accessibilityValue(summary(reports)).accessibilityIdentifier("businessTrend")
-                    Section("Report Values") {
+                    Section {
                         ValueRow(title: "Care revenue", value: money(reports.reduce(0) { $0 + $1.revenue }))
                         ValueRow(title: "Operating costs and refunds", value: money(reports.reduce(0) { $0 + $1.expenses }))
                         ValueRow(title: "Operating result", value: money(reports.reduce(0) { $0 + $1.profit }))
                         ValueRow(title: "Cash movement", value: money(state.cashMovement(from: reports.first!.day, through: reports.last!.day)))
                         ValueRow(title: "Care days delivered", value: "\(reports.reduce(0) { $0 + $1.attendance })")
                         ValueRow(title: "Business explanation", value: reports.last?.explanation ?? "")
-                    }
-                    Section("Individual Days") { ForEach(reports.reversed()) { report in ValueRow(title: "Day \(report.day + 1)", value: "\(metric): \(spoken(report)).") } }
+                    } header: { Text("Report Values").foregroundStyle(Color.primary) }
+                    Section { ForEach(reports.reversed()) { report in ValueRow(title: "Day \(report.day + 1)", value: "\(metric): \(spoken(report)).") } } header: { Text("Individual Days").foregroundStyle(Color.primary) }
                 }
             }
         }.listStyle(.plain).navigationTitle("Reports")
@@ -148,7 +148,7 @@ struct ReportsView: View {
     private func value(_ r: DayReport) -> Double {
         switch metric { case "Revenue": return Double(r.revenue) / 100; case "Expenses": return Double(r.expenses) / 100; case "Profit": return Double(r.profit) / 100; case "Cash": return Double(r.cash) / 100; case "Attendance": return Double(r.attendance); case "Welfare": return Double(r.welfare); case "Customers": return Double(r.customers); default: return Double(r.staff) }
     }
-    private func spoken(_ r: DayReport) -> String { ["Revenue", "Expenses", "Profit", "Cash"].contains(metric) ? money(Int((value(r) * 100).rounded())) : metric == "Welfare" ? (r.customers == 0 ? "No dogs registered" : "\(r.welfare) out of 100") : "\(Int(value(r)))" }
+    private func spoken(_ r: DayReport) -> String { ["Revenue", "Expenses", "Profit", "Cash"].contains(metric) ? money(Pence((value(r) * 100).rounded())) : metric == "Welfare" ? (r.customers == 0 ? "No dogs registered" : "\(r.welfare) out of 100") : "\(Int(value(r)))" }
     private func summary(_ reports: [DayReport]) -> String {
         guard let first = reports.first, let last = reports.last else { return "No completed days" }
         let direction = value(last) > value(first) ? "Increased" : value(last) < value(first) ? "Decreased" : "Unchanged"

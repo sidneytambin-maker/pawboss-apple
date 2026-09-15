@@ -120,9 +120,12 @@ def main():
     select_xcode()
     run(["xcodegen", "generate", "--spec", "project.yml"], "generate-project")
     if args.stage in ["all", "tests"]:
+        run(["swift", "test", "--parallel"], "core-tests")
+        # Compile physical iPhone/watch architectures before booting simulators.
+        run(["xcodebuild", "-project", "PawBoss.xcodeproj", "-scheme", "PawBoss", "-configuration", "Release",
+             "-destination", "generic/platform=iOS", "CODE_SIGNING_ALLOWED=NO", "build"], "physical-device-build")
         failures = []
-        for label, stage in [("Core", lambda: run(["swift", "test", "--parallel"], "core-tests")),
-                             ("iPhone", lambda: ui_tests("iOS")), ("Watch", lambda: ui_tests("watchOS"))]:
+        for label, stage in [("iPhone", lambda: ui_tests("iOS")), ("Watch", lambda: ui_tests("watchOS"))]:
             try:
                 stage()
             except Exception as error:

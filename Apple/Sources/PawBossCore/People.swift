@@ -148,7 +148,7 @@ extension GameEngine {
         guard state.staff[i].employed else { throw GameError.invalid("This person is not currently employed.") }
         switch action {
         case .dismiss:
-            try spend(state.staff[i].hourlyPay * state.staff[i].hoursPerWeek, "Final agreed notice pay for \(state.staff[i].name)")
+            try spend(state.staff[i].hourlyPay * Pence(state.staff[i].hoursPerWeek), "Final agreed notice pay for \(state.staff[i].name)")
             state.staff[i].leftDay = state.day; state.staff[i].history.append(Memory(day: state.day, text: "Employment ended; notice pay settled."))
             return "Employment ended. Review upcoming bookings and cover."
         case .promote:
@@ -208,13 +208,13 @@ public extension GameEngine {
     static var courses: [String] { ["Canine first aid", "Dog behaviour", "Medication records", "Puppy care", "Senior care", "Customer service", "Cleaning standards", "Leadership", "Overnight care", "Dog transport"] }
     var weeklyPayroll: Pence {
         state.staff.filter(\.employed).reduce(0) { sum, member in
-            let wage = member.hourlyPay * member.hoursPerWeek
+            let wage = member.hourlyPay * Pence(member.hoursPerWeek)
             let employerNI = max(0, wage - 9615) * 15 / 100
             let pension = max(0, wage - 12000) * 3 / 100
             return sum + wage + employerNI + pension
         }
     }
-    var monthlyLoanPayment: Pence { state.loan.principal * catalog.economy.loanAPRPercent / 1200 + min(state.loan.principal, max(5000, state.loan.original / 36)) }
+    var monthlyLoanPayment: Pence { state.loan.principal * Pence(catalog.economy.loanAPRPercent) / 1200 + min(state.loan.principal, max(5000, state.loan.original / 36)) }
     var monthlyForecast: Pence {
         let confirmed = state.bookings.filter { $0.day >= state.day && $0.day < state.day + 28 && [.expected, .checkedIn].contains($0.status) && !$0.paid }.reduce(0) { $0 + $1.price }
         let facilities = state.areas.flatMap(\.items).reduce(0) { $0 + ((try? catalog.item($1.definitionID).weeklyCost) ?? 0) }
@@ -222,7 +222,7 @@ public extension GameEngine {
     }
     var maintenanceQuote: Pence {
         get throws {
-            try state.areas.flatMap(\.items).filter { $0.condition < 90 }.reduce(0) { $0 + max(100, try catalog.item($1.definitionID).price * (100 - $1.condition) / 300) }
+            try state.areas.flatMap(\.items).filter { $0.condition < 90 }.reduce(0) { $0 + max(100, try catalog.item($1.definitionID).price * Pence(100 - $1.condition) / 300) }
         }
     }
 }

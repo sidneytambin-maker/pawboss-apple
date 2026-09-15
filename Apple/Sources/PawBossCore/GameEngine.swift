@@ -148,7 +148,7 @@ public struct GameEngine {
             guard let a = state.areas.firstIndex(where: { $0.id == area }), let i = state.areas[a].items.firstIndex(where: { $0.id == id }) else { throw GameError.invalid("This item has already been removed.") }
             let item = state.areas[a].items[i]
             guard item.definitionID != "extension" else { throw GameError.invalid("Care buildings cannot be demolished while their rooms form part of the licensed site.") }
-            let value = try catalog.item(item.definitionID).price * item.condition / 400
+            let value = try catalog.item(item.definitionID).price * Pence(item.condition) / 400
             state.areas[a].items.remove(at: i); post(value, "Equipment resale", kind: .investment)
             return "Item removed. \(money(value)) resale value received."
         case .clean:

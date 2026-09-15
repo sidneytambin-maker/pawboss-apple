@@ -115,7 +115,7 @@ final class PawBossUITests: XCTestCase {
         app.launch(); app.tabBars.buttons["More"].tap(); app.buttons["Reports"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["businessTrend"].waitForExistence(timeout: 10))
         screenshot("business-reports", app: app)
-        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .trait])
+        try app.performAccessibilityAudit(for: [.contrast, .sufficientElementDescription, .trait])
         let revenue = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Care revenue.")).firstMatch
         for _ in 0..<5 {
             if revenue.exists && revenue.isHittable { break }
