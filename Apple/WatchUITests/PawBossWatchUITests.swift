@@ -15,12 +15,11 @@ final class PawBossWatchUITests: XCTestCase {
     func reach(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 30) {
         for _ in 0..<attempts {
             if element.exists && element.isHittable { return }
-            // watchOS can report its tiny scroll indicator as the application's main window.
-            // Anchor gestures to the content instead, outside the native slider track.
+            // Use a standard swipe inside the content, not the Watch's rounded edge
+            // or its scroll-indicator window. Sliders have their own adjustment screens.
             let content = app.collectionViews.firstMatch.exists ? app.collectionViews.firstMatch : app.scrollViews.firstMatch
             let surface = content.exists ? content : app.windows.element(boundBy: 0)
-            let start = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.80))
-            start.press(forDuration: 0.05, thenDragTo: surface.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: 0.62)))
+            surface.swipeUp(velocity: .slow)
         }
         XCTAssertTrue(element.exists && element.isHittable, "Control not reached: \(element)")
     }
