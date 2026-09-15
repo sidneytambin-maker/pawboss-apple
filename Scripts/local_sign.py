@@ -100,6 +100,14 @@ def make_ipa(app, target):
             entry.compress_type = zipfile.ZIP_DEFLATED
             package.writestr(entry, file.read_bytes())
 
+def signing_command(args, label, target):
+    assert label in BUNDLES
+    # A Windows drive colon is interpreted as a signing scope. Resolve this
+    # basename from the protected temporary working directory instead.
+    return [str(args.rcodesign), "sign", "--shallow", "--p12-file", str(args.certificate_file),
+            "--p12-password-file", str(args.password_file), "--team-name", TEAM, "--timestamp-url", "none",
+            "--entitlements-xml-file", label + ".plist", str(target)]
+
 def sign(args):
     from cryptography import x509
     from cryptography.hazmat.primitives import serialization
@@ -134,9 +142,7 @@ def sign(args):
             profiles[label] = {"id": records[0]["id"], "uuid": profile["UUID"], "bundle": bundle}
         for label in ["Watch", "Phone"]:
             target = app if label == "Phone" else app / "Watch/PawBossWatch.app"
-            command = [str(args.rcodesign), "sign", "--shallow", "--p12-file", str(args.certificate_file),
-                       "--p12-password-file", str(args.password_file), "--team-name", TEAM, "--timestamp-url", "none",
-                       "--entitlements-xml-file", str(temporary / (label + ".plist")), str(target)]
+            command = signing_command(args, label, target)
             result = subprocess.run(command, cwd=temporary, capture_output=True)
             log = (result.stdout + result.stderr).replace(password, b"[REDACTED]")
             (output / (label + "-signing.log")).write_bytes(log)

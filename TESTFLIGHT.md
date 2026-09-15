@@ -29,7 +29,22 @@ The scripts are `local_sign.py`, `inspect_local_ipa.py`, `direct_upload.py` and 
 
 ## Current Publication State
 
-Native validation is in progress. No PawBoss IPA upload, internal invitation, external review approval or public TestFlight link has yet been verified. This section must be updated from Apple's actual responses after release. Metadata is prepared in `Docs/TestFlight-Metadata.json`; preparing it is not publication.
+Verified on 15 September 2026:
+
+- Native run 34912120697 passed: 45 core tests, eight iPhone UI tests, four Watch UI tests and physical iPhone/Watch Release compilation and archive.
+- Tested native revision: cd09a2b2e8884e7228175e1b7a3ab9409aab810d.
+- Local package inspection passed for both apps: CMS signatures, distribution entitlements/profiles, native code/data and resource seals.
+- IPA SHA-256: a229ea6b06eb1646e1bb068ec27cd3ce867e1467c34dfcf6dea635e38c34543f.
+- Apple upload COMPLETE with no reported errors or warnings. Build processing VALID.
+- Apple build ID: ebbaa695-2e95-4d2a-af4a-3ac813120351, version 0.1.0 (1).
+- Internal TestFlight: IN_BETA_TESTING. Account-holder tester membership verified.
+- External group has this build. Beta App Review submitted: WAITING_FOR_REVIEW; external build WAITING_FOR_BETA_REVIEW.
+- Beta description, testing instructions and review contact are saved and verified. Mac and Apple Vision availability are disabled on both groups.
+- Public link is disabled pending approval. No public-link email has been sent.
+
+Native evidence is retained locally in ignored `Artifacts/Run34912120697`. Signing, upload and beta receipts are in ignored `Artifacts/Release-0.1.0-1-verified`. The earlier `Artifacts/Release-0.1.0-1` package failed inspection and was never uploaded; do not distribute it.
+
+An hourly thread follow-up is configured to verify Apple's decision, enable the external public link after approval, verify its PawBoss page, and email it once through the owner's Gmail. It remains quiet on unchanged waiting states. Apple review is an external dependency, not a completed release.
 
 ## Known Beta Boundaries
 

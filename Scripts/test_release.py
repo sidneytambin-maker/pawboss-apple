@@ -4,9 +4,19 @@ import unittest
 from unittest.mock import Mock, patch
 from testflight import owner_invitation
 from direct_upload import APP_ID, checked_operations, chunk_matches, commit_payload, file_payload, upload_payload
-from local_sign import BUNDLES, distribution_entitlements, validated_run
+from local_sign import BUNDLES, distribution_entitlements, signing_command, validated_run
 
 class ReleaseTests(unittest.TestCase):
+    def test_windows_entitlements_are_not_interpreted_as_path_scopes(self):
+        from types import SimpleNamespace
+        args = SimpleNamespace(rcodesign=r"C:\tools\rcodesign.exe", certificate_file=r"C:\private\certificate.p12", password_file=r"C:\private\password.txt")
+        for label in BUNDLES:
+            command = signing_command(args, label, r"C:\release\PawBoss.app")
+            value = command[command.index("--entitlements-xml-file") + 1]
+            self.assertEqual(value, label + ".plist")
+            self.assertNotIn(":", value)
+            self.assertIn("--shallow", command)
+
     def operation(self, offset=0, length=4, url="https://upload.apple.com/part"):
         return {"method": "PUT", "offset": offset, "length": length, "url": url, "requestHeaders": []}
 

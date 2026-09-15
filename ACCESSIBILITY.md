@@ -15,6 +15,6 @@ Accessibility is always present; there is no separate accessibility mode.
 
 ## Evidence and Remaining Checks
 
-The first native audit identified low-contrast dashboard detail text. Its foreground and adaptive accent colours have been corrected and are undergoing repeat audit. Compilation and automated accessibility checks do not prove independent VoiceOver completion.
+The native audits identified dashboard contrast, large-text overlap and duplicate navigation semantics. These were corrected. Run 34912120697 passed the eight iPhone and four Watch UI tests, including largest-text dashboard audits, dark settings and report contrast/semantics. Screenshots were inspected for reports and Watch care. Compilation and automated accessibility checks do not prove independent VoiceOver completion.
 
 Physical iPhone and Watch checks must cover initial focus, rotor actions, cancel/delete focus restoration, premises coordinates, charts, notification cold launch, audio competition, Digital Crown navigation, queued actions and reconnection. Test all major forms at the largest text size, in both appearances and with Reduce Motion. Do not mark these passed until actually exercised.
