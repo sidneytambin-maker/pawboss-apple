@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import zipfile
+from audio_audit import verify_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 APPLE = ROOT / "Apple"
@@ -16,6 +17,7 @@ ARTIFACTS = ROOT / "Artifacts"
 ARCHIVE = ARTIFACTS / "PawBoss.xcarchive"
 PHONE = "com.sidneytambin.pawboss"
 WATCH = PHONE + ".watchkitapp"
+RELEASE = json.loads((APPLE / "release.json").read_bytes())
 
 def run(args, name, cwd=APPLE):
     ARTIFACTS.mkdir(exist_ok=True)
@@ -90,15 +92,14 @@ def inspect_archive(archive):
         assert info["CFBundleIdentifier"] == identifier
         assert info["CFBundleDisplayName"] == "PawBoss"
         assert info["UIDeviceFamily"] == family, "Unexpected device family; iPad is excluded"
-        assert info["CFBundleShortVersionString"] == "0.1.0"
-        assert info["CFBundleVersion"] == "1"
+        assert info["CFBundleShortVersionString"] == RELEASE["version"]
+        assert info["CFBundleVersion"] == RELEASE["build"]
         assert (app / info["CFBundleExecutable"]).is_file()
         assert (app / "Assets.car").is_file(), "Compiled icon and image catalogue missing"
         assert (app / "PrivacyInfo.xcprivacy").is_file()
         catalog = list(app.glob("*.bundle/catalog.json"))
         assert len(catalog) == 1, "Shared gameplay catalog missing"
-        for audio in (APPLE / "App/Audio").glob("*.wav"):
-            assert (app / audio.name).is_file(), label + " audio missing: " + audio.name
+        verify_bundle(app)
         if label == "Watch":
             assert info["WKCompanionAppBundleIdentifier"] == PHONE
             assert info["WKApplication"] is True

@@ -82,6 +82,7 @@ struct AreaView: View {
                     if let definition = try? catalog.item(itemID) {
                         ValueRow(title: "Purchase", value: "\(money(definition.price)). \(definition.width) by \(definition.height). \(definition.detail)")
                         ValueRow(title: "Ongoing commitment", value: "\(money(definition.weeklyCost)) per week. Typical life \(definition.lifespanDays) game days.")
+                        ValueRow(title: "Cash after purchase", value: "\(money(state.cash - definition.price)). This excludes upcoming wages, rent and care supplies.")
                         Act(title: "Build \(definition.name)", icon: "hammer", action: .build(itemID, id, row, column), confirmation: "Install \(definition.name.lowercased()) at \(area.coordinate(row: row, column: column)) for \(money(definition.price))?")
                     }
                     if area.isOutdoor { Act(title: "Build Missing Perimeter", icon: "rectangle.dashed", action: .buildBoundary, confirmation: "Install missing boundary panels at twenty-five pounds each, keeping existing gates?") }

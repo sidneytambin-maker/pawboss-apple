@@ -6,20 +6,12 @@ enum Destination: Hashable {
     case dog(UUID), customer(UUID), employee(UUID), enquiry(UUID), message(UUID), booking(UUID), area(String)
     case dogTask(UUID, DogTask), staffTask(UUID, StaffTask)
 }
-struct AppPreferences: Codable {
-    var appearance = "System"
-    var reduceMotion = false
-    var adviser = true
-    var haptics = true
-    var volumes: [String: Double] = ["Music": 0.15, "Ambience": 0.15, "Dogs": 0.25, "Customers": 0.3, "Office": 0.25, "Gameplay": 0.35]
-    var notifications: [String: Bool] = ["Enquiries": true, "Medication": true, "Vaccinations": true, "Inspections": true, "Staff": true, "Messages": true, "Reports": true, "Anniversaries": true]
-    var notificationEnabled = false
-}
 @MainActor final class BusinessStore: ObservableObject {
-    @Published private(set) var state: BusinessState?
+    @Published private(set) var state: BusinessState? { didSet { refreshSoundscape() } }
     @Published var preferences: AppPreferences
-    @Published var path: [Destination] = []
-    @Published var tab = 0
+    @Published var path: [Destination] = [] { didSet { refreshSoundscape() } }
+    @Published var tab = 0 { didSet { refreshSoundscape() } }
+    @Published var watchSection: Destination = .today { didSet { refreshSoundscape() } }
     @Published var inBusiness = false
     @Published var errorMessage: String?
     @Published var status = ""
@@ -146,6 +138,18 @@ struct AppPreferences: Codable {
     func refreshSync() {
         if isWatch { for command in outbox.pending { sync?.send(command) }; sync?.requestSnapshot() }
         else if let state { sync?.publish(state) }
+    }
+    func refreshSoundscape() {
+        let destination = path.last ?? (isWatch ? watchSection : [.today, .office, .dogs, .premises, .more][min(4, max(0, tab))])
+        let scene: Soundscape
+        switch destination {
+        case .area(let id):
+            if id == "outdoor" { scene = .outdoors(weather: state?.weather ?? "") }
+            else { scene = state?.areas.first(where: { $0.id == id })?.purpose == .reception ? .office : .care }
+        case .dogs, .dog, .dogTask: scene = .care
+        default: scene = .office
+        }
+        feedback.configure(scene: scene, hasDogs: state?.dogs.contains(where: { $0.present }) ?? false)
     }
     private func receive(_ command: GameCommand) {
         guard !isWatch else { return }

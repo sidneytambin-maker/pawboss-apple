@@ -7,6 +7,21 @@ from direct_upload import APP_ID, checked_operations, chunk_matches, commit_payl
 from local_sign import BUNDLES, distribution_entitlements, signing_command, validated_run
 
 class ReleaseTests(unittest.TestCase):
+    def test_licensed_library_has_no_legacy_synthesis_or_volume_override(self):
+        from audio_audit import library_files, ROOT
+        files = library_files()
+        self.assertEqual(len(files), 24)
+        feedback = (ROOT / "Apple/App/Feedback.swift").read_text()
+        self.assertNotIn("isVoiceOverRunning", feedback)
+        self.assertNotIn("WKAccessibilityIsVoiceOverRunning", feedback)
+        generator = (ROOT / "Scripts/prepare_assets.py").read_text()
+        self.assertNotIn("def audio(", generator)
+        self.assertNotIn("def sound(", generator)
+
+    def test_new_build_is_explicit_and_upload_keeps_its_identity(self):
+        from local_sign import RELEASE
+        self.assertEqual(RELEASE, {"version":"0.1.0","build":"2"})
+        self.assertEqual(upload_payload(APP_ID, RELEASE["build"])["data"]["attributes"]["cfBundleVersion"], "2")
     def test_windows_entitlements_are_not_interpreted_as_path_scopes(self):
         from types import SimpleNamespace
         args = SimpleNamespace(rcodesign=r"C:\tools\rcodesign.exe", certificate_file=r"C:\private\certificate.p12", password_file=r"C:\private\password.txt")

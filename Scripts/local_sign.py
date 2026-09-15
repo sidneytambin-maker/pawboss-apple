@@ -16,8 +16,10 @@ import zipfile
 from pathlib import Path
 
 from apple_setup import Apple, BUNDLES, ROOT, TEAM
+from audio_audit import verify_bundle
 
 REPOSITORY = "sidneytambin-maker/pawboss-apple"
+RELEASE = json.loads((ROOT / "Apple/release.json").read_bytes())
 
 def gh(*args):
     return subprocess.check_output(["gh", *args], cwd=ROOT, text=True)
@@ -73,12 +75,11 @@ def prepare_app(evidence, destination):
     for label, app, family in [("Phone", destination, [1]), ("Watch", destination / "Watch/PawBossWatch.app", [4])]:
         info = plistlib.loads((app / "Info.plist").read_bytes())
         assert info["CFBundleIdentifier"] == BUNDLES[label] and info["CFBundleDisplayName"] == "PawBoss"
-        assert info["CFBundleVersion"] == "1" and info["CFBundleShortVersionString"] == "0.1.0"
+        assert info["CFBundleVersion"] == RELEASE["build"] and info["CFBundleShortVersionString"] == RELEASE["version"]
         assert info["UIDeviceFamily"] == family
         banks = list(app.glob("*.bundle/catalog.json"))
         assert len(banks) == 1 and banks[0].read_bytes() == (ROOT / "Apple/Sources/PawBossCore/Resources/catalog.json").read_bytes()
-        for audio in (ROOT / "Apple/App/Audio").glob("*.wav"):
-            assert (app / audio.name).read_bytes() == audio.read_bytes()
+        verify_bundle(app)
         if label == "Watch":
             assert info["WKCompanionAppBundleIdentifier"] == BUNDLES["Phone"] and info["WKApplication"]
     return source
@@ -150,7 +151,7 @@ def sign(args):
     (output / "distribution-certificate.pem").write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
     ipa = output / "PawBoss.ipa"
     make_ipa(app, ipa)
-    receipt = {"validatedRun": str(args.run), "sourceRevision": run["head_sha"], "build": "1", "version": "0.1.0",
+    receipt = {"validatedRun": str(args.run), "sourceRevision": run["head_sha"], **RELEASE,
                "ipaSHA256": hashlib.sha256(ipa.read_bytes()).hexdigest(), "profiles": profiles, "signedLocally": True,
                "signatureInspectionComplete": False, "uploaded": False}
     (output / "local-signing.json").write_text(json.dumps(receipt, indent=2))

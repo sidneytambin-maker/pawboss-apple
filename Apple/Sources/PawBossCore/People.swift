@@ -8,11 +8,13 @@ extension GameEngine {
         let surname = catalog.surnames[(serial / catalog.firstNames.count) % catalog.surnames.count]
         let cycle = serial / (catalog.firstNames.count * catalog.surnames.count)
         let suffix = cycle == 0 ? "" : " \(catalog.firstNames[cycle % catalog.firstNames.count])"
-        let customer = Customer(name: "\(first)\(suffix) \(surname)", communication: serial % 2 == 0 ? "Email" : "Collection handover", bookingHabit: serial % 3 == 0 ? "Three weekdays each week" : "Two weekdays each week")
+        let customer = Customer(name: "\(first)\(suffix) \(surname)", communication: CustomerSchedule.communications[serial % CustomerSchedule.communications.count], bookingHabit: CustomerSchedule.habits[(serial / 2) % CustomerSchedule.habits.count])
         // A household surname distinguishes dogs with the same everyday name without conflating their records.
         var dog = Dog(name: "\(template.name) \(first)\(suffix) \(surname)", breed: template.breed, ageMonths: 12 + state.random(120), sex: serial % 2 == 0 ? "Female" : "Male", appearance: template.appearance, ownerID: customer.id,
             personality: template.personality, favouriteActivity: template.activity, diet: template.diet, health: template.health,
             carePlan: "Calm arrival, fresh water, \(template.activity.lowercased()), a quiet rest and an individual collection handover.", joinedDay: state.day)
+        if serial % 9 == 5 { dog.ageMonths = 5 + state.random(6) }
+        if template.name == "Finn" { dog.ageMonths = 108 + state.random(48) }
         dog.confidence = 30 + state.random(50); dog.energy = 35 + state.random(50); dog.sociability = 30 + state.random(55)
         dog.vaccinationDueDay = state.day + 90 + state.random(180)
         if template.name == "Finn" {
@@ -82,13 +84,14 @@ extension GameEngine {
         let hygiene = state.cleanliness >= 60
         let staffing = state.dogs.filter(\.present).count <= state.careCapacity
         let water = state.has("water")
-        let delta = (rest ? 3 : -4) + (enrichment ? 2 : -2) + (hygiene ? 1 : -8) + (staffing ? 1 : -12) + (water ? 1 : -15)
+        let support = state.equipmentSupport(for: state.dogs[d])
+        let delta = (rest ? 3 : -4) + (enrichment ? 2 : -2) + (hygiene ? 1 : -8) + (staffing ? 1 : -12) + (water ? 1 : -15) + support.welfare
         state.dogs[d].welfare = bounded(state.dogs[d].welfare + delta)
-        state.dogs[d].stress = bounded(state.dogs[d].stress + (rest && staffing ? -4 : 7))
+        state.dogs[d].stress = bounded(state.dogs[d].stress + (rest && staffing ? -4 : 7) - support.stressRelief)
         state.dogs[d].confidence = bounded(state.dogs[d].confidence + (delta > 0 ? 1 : -3))
         state.dogs[d].lastCareDay = state.day
         let note = rest && enrichment ? "Enjoyed \(state.dogs[d].favouriteActivity.lowercased()) and settled for a quiet rest." : rest ? "Rested quietly; more enrichment would help." : "Needed a quieter rest period during the day."
-        state.dogs[d].observations.append(Memory(day: state.day, text: note))
+        state.dogs[d].observations.append(Memory(day: state.day, text: note + (support.explanation.isEmpty ? "" : " " + support.explanation + ".")))
         if let handler = state.staff.first(where: { $0.onDuty(day: state.day) && $0.role.caresForDogs }), state.dogs[d].attendedDays.count >= 3, !state.dogs[d].trustedStaff.contains(handler.id) { state.dogs[d].trustedStaff.append(handler.id) }
         if state.dogs[d].attendedDays.count >= 4 && delta > 0 {
             if let friend = state.dogs.first(where: { $0.id != dogID && $0.present && abs($0.energy - state.dogs[d].energy) < 20 && !state.dogs[d].friends.contains($0.id) }) {

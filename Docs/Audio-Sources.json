@@ -1,0 +1,97 @@
+{
+  "sources": [
+{"id":"music-town","title":"Hot Springs Town","author":"Kistol","page":"https://opengameart.org/content/hot-springs-town","url":"https://opengameart.org/sites/default/files/hot_spring_town.mp3","license":"CC0","licenseURL":"https://creativecommons.org/publicdomain/zero/1.0/"},
+{"id":"music-running","title":"Slowly Running","author":"Game_assets_66","page":"https://opengameart.org/content/slowly-running","url":"https://opengameart.org/sites/default/files/Slowly%20running%20mp3.mp3","license":"CC0","licenseURL":"https://creativecommons.org/publicdomain/zero/1.0/"},
+{"id":"music-revelation","title":"Revelation","author":"Indieteur","page":"https://opengameart.org/content/revelation","url":"https://opengameart.org/sites/default/files/Revelation_0.mp3","license":"CC0","licenseURL":"https://creativecommons.org/publicdomain/zero/1.0/"},
+    {
+      "id": "music-meadow",
+      "title": "Happy moments (1.4)",
+      "author": "Centurion_of_war",
+      "page": "https://opengameart.org/content/happy-moments",
+      "url": "https://opengameart.org/sites/default/files/piano1.4_0.ogg",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "music-new-day",
+      "title": "A New Day",
+      "author": "SpiderDave",
+      "page": "https://opengameart.org/content/a-new-day",
+      "url": "https://opengameart.org/sites/default/files/49_0.ogg",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "music-happy",
+      "title": "Happy",
+      "author": "Alex McCulloch (Pro Sensory)",
+      "page": "https://opengameart.org/content/happy",
+      "url": "https://opengameart.org/sites/default/files/happy_song_1_0.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "office-room",
+      "title": "The Office",
+      "author": "Iwan 'qubodup' Gabovitch",
+      "page": "https://freesound.org/people/qubodup/sounds/211945/",
+      "url": "https://cdn.freesound.org/previews/211/211945_71257-hq.mp3",
+      "license": "CC-BY-3.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/3.0/"
+    },
+    {
+      "id": "outdoor-garden",
+      "title": "Ambience near bird feeders",
+      "author": "BeeProductive",
+      "page": "https://freesound.org/people/BeeProductive/sounds/378379/",
+      "url": "https://cdn.freesound.org/previews/378/378379_4298084-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "outdoor-rain",
+      "title": "Rain and birds",
+      "author": "FenrirFangs",
+      "page": "https://freesound.org/people/FenrirFangs/sounds/231685/",
+      "url": "https://cdn.freesound.org/previews/231/231685_3635427-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "dog-recording",
+      "title": "Barking Aldi Dog",
+      "author": "qubodup",
+      "page": "https://freesound.org/people/qubodup/sounds/211607/",
+      "url": "https://cdn.freesound.org/previews/211/211607_71257-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "arrival",
+      "title": "Doorbell",
+      "author": "vdr3",
+      "page": "https://freesound.org/people/vdr3/sounds/393333/",
+      "url": "https://cdn.freesound.org/previews/393/393333_4994127-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "interface",
+      "title": "Interface Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "impact",
+      "title": "Impact Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  ]
+}

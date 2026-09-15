@@ -3,14 +3,13 @@ import PawBossCore
 
 struct RootView: View {
     @EnvironmentObject private var store: BusinessStore
-    @State private var watchSection: Destination = .today
     @State private var menu = false
     var body: some View {
         NavigationStack(path: $store.path) {
             Group {
                 if store.isWatch {
                     Group {
-                        if store.state != nil { DestinationView(destination: watchSection) }
+                        if store.state != nil { DestinationView(destination: store.watchSection) }
                         else { WaitingView() }
                     }
                     .toolbar {
@@ -36,7 +35,7 @@ struct RootView: View {
                 NavigationStack {
                     List {
                         ForEach(watchSections, id: \.0) { section in
-                            Button(section.1, systemImage: section.2) { watchSection = section.0; store.path = []; menu = false }
+                            Button(section.1, systemImage: section.2) { store.watchSection = section.0; store.path = []; menu = false }
                         }
                     }.navigationTitle("Menu")
                 }

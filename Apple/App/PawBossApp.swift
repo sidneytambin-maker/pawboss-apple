@@ -13,7 +13,8 @@ import WatchConnectivity
                 .transaction { transaction in
                     if systemReduceMotion || store.preferences.reduceMotion { transaction.animation = nil; transaction.disablesAnimations = true }
                 }
-                .onChange(of: store.inBusiness) { _, value in store.feedback.setActive(phase == .active && value) }
+                .onAppear { store.refreshSoundscape(); store.feedback.setActive(phase == .active && store.inBusiness) }
+                .onChange(of: store.inBusiness) { _, value in store.refreshSoundscape(); store.feedback.setActive(phase == .active && value) }
                 .onChange(of: phase) { _, value in
                     store.feedback.setActive(value == .active && store.inBusiness)
                     if value == .active { store.refreshSync() }

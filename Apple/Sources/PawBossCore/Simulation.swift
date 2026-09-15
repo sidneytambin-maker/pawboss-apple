@@ -28,12 +28,13 @@ extension GameEngine {
             }
         }
         let attendance = state.bookings.filter { $0.day == day && $0.status == .completed }.count
-        state.cleanliness = bounded(state.cleanliness - attendance * 2 - (state.weather == "Heavy rain" ? attendance : 0) + (state.priorities.contains("cleaning") ? 8 : 0))
+        state.cleanliness = bounded(state.cleanliness - attendance * 2 - (state.weather == "Heavy rain" ? attendance : 0) + (state.priorities.contains("cleaning") ? 8 : 0) + (attendance > 0 ? state.cleaningEquipmentSupport : 0))
         if attendance > 0 && state.priorities.contains("cleaning") { post(-300 - Pence(attendance) * 40, "Daily cleaning and laundry", kind: .expense) }
         for i in state.staff.indices where state.staff[i].employed {
             let onDuty = state.staff[i].onDuty(day: day)
             let pressure = attendance >= max(1, state.careCapacity) ? 4 : -2
-            state.staff[i].stress = bounded(state.staff[i].stress + (onDuty ? pressure : -4))
+            let breakSupport = attendance < state.careCapacity ? state.teamEquipmentSupport : 0
+            state.staff[i].stress = bounded(state.staff[i].stress + (onDuty ? pressure - breakSupport : -4))
             state.staff[i].morale = bounded(state.staff[i].morale + (state.staff[i].stress > 65 ? -3 : attendance > 0 ? 1 : 0))
             if onDuty && attendance > 0 && day % 7 == 6 { state.staff[i].skill = bounded(state.staff[i].skill + 1) }
             if onDuty && attendance > 0 && state.priorities.contains("training") && day % 3 == 0 {
@@ -162,10 +163,9 @@ extension GameEngine {
     mutating func scheduleReturningCustomers() {
         for dog in state.dogs where dog.welfare >= 60 {
             guard let customer = state.customers.first(where: { $0.id == dog.ownerID && $0.trust >= 35 && $0.visits > 0 }) else { continue }
-            let count = customer.bookingHabit.hasPrefix("Three") ? 3 : 2
-            for offset in 0..<count {
+            for offset in CustomerSchedule.offsets(for: customer.bookingHabit) {
                 var candidate = self
-                do { try candidate.book(dog.id, service: .dayCare, day: state.day + offset); self = candidate }
+                do { try candidate.book(dog.id, service: CustomerSchedule.service(for: customer.bookingHabit), day: state.day + offset); self = candidate }
                 catch { /* An unsafe or duplicate returning booking is not added. */ }
             }
         }
@@ -176,7 +176,15 @@ extension GameEngine {
             guard state.day - state.eventLastDays[event.id, default: -1000] >= event.cooldown else { return false }
             switch event.condition {
             case "rain": return state.weather == "Heavy rain"
-            case "heat": return state.weather == "Warm sunshine" && !state.has("shade")
+            case "heat": return state.weather == "Warm sunshine" && !state.careHas(["shade", "coolmat", "fan", "canopy"])
+            case "rainPrepared": return state.weather == "Heavy rain" && state.cleaningEquipmentSupport >= 2
+            case "seniorCare": return state.dogs.contains { $0.ageMonths >= 96 && $0.attendedDays.last == state.day } && state.careHas(["orthobed", "quietden"]) && state.priorities.contains("rest")
+            case "enrichment": return state.priorities.contains("enrichment") && state.careHas(["snuffle", "puzzle", "garden", "trainingkit"]) && state.welfare >= 75
+            case "reserve": return state.day >= 28 && state.cash >= 300000 && state.loan.principal == 0
+            case "loyal": return state.customers.contains { $0.visits >= 10 && $0.trust >= 75 }
+            case "teamPrepared": return state.staff.contains { $0.employed && $0.skill >= 70 && $0.stress < 40 }
+            case "tightMargin": return state.reports.suffix(7).filter { $0.attendance > 0 }.count >= 3 && state.reports.suffix(7).reduce(0, { $0 + $1.profit }) < 0
+            case "coldPrepared": return state.weather == "Cold snap" && state.careHas(["blankets"]) && state.priorities.contains("rest")
             case "worn": return state.areas.flatMap(\.items).contains { $0.condition < 45 }
             case "stress": return state.staff.contains { $0.employed && $0.stress > 65 }
             case "settled": return state.customers.count >= 3 && state.welfare > 70

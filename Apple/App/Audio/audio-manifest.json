@@ -1,0 +1,390 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "id": "music-town",
+      "title": "Hot Springs Town",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-town.m4a",
+      "duration": 160.009,
+      "source": "music-town",
+      "sha256": "5661b281d8b7d87756eb9d8f74f88d6a82cb1dd23cd75840a8bdf7389d472393",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "music-running",
+      "title": "Slowly Running",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-running.m4a",
+      "duration": 300.536,
+      "source": "music-running",
+      "sha256": "aa9879c175b545fda49b24696f3ae509f114d7aa12010dca7208fef35124c3e4",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "music-revelation",
+      "title": "Revelation",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-revelation.m4a",
+      "duration": 84.822,
+      "source": "music-revelation",
+      "sha256": "e63808e6c33d7703842d986c43db10c8689242031030bf1392744ce5bf9752d8",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "music-meadow",
+      "title": "Happy moments (1.4)",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-meadow.m4a",
+      "duration": 76.812,
+      "source": "music-meadow",
+      "sha256": "bfa76fe8cb22921b63393ebf258bad6bd7c633cf0aeec5147002c291a66dfddd",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "music-new-day",
+      "title": "A New Day",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-new-day.m4a",
+      "duration": 88.631,
+      "source": "music-new-day",
+      "sha256": "44e083b75e48ca1ebf452c372eeebb5b95c5a0c1089a179f14c8b93cadc0d6e8",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "music-happy",
+      "title": "Happy",
+      "category": "Music",
+      "kind": "music",
+      "file": "music-happy.m4a",
+      "duration": 104.025,
+      "source": "music-happy",
+      "sha256": "36be868f82db8ea958ab64b5e145c59c15e7e6cbc9b588731420045ddb7b8c3b",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "office-room",
+      "title": "Working office",
+      "category": "Office",
+      "kind": "ambience",
+      "file": "office-room.m4a",
+      "duration": 600.004,
+      "source": "office-room",
+      "sha256": "e1e79834d046f4a1e975ddcc324ce431be57e3627c73b9f79f5ecc019cd68d32",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "outdoor-garden",
+      "title": "Garden birds",
+      "category": "Ambience",
+      "kind": "ambience",
+      "file": "outdoor-garden.m4a",
+      "duration": 41.703,
+      "source": "outdoor-garden",
+      "sha256": "e47dee1dda4207f67d8a8427fedc44ee38c8ff81fe09b2573b2c5c18dec70d18",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "outdoor-rain",
+      "title": "Rain in the grounds",
+      "category": "Ambience",
+      "kind": "ambience",
+      "file": "outdoor-rain.m4a",
+      "duration": 203.198,
+      "source": "outdoor-rain",
+      "sha256": "8b3a3bbe0bfe80555107a16471657813a78245187444ecf1f8f752de8f39ba5f",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "arrival",
+      "title": "Reception doorbell",
+      "category": "Customers",
+      "kind": "effect",
+      "file": "arrival.m4a",
+      "duration": 5.271,
+      "source": "arrival",
+      "sha256": "2536156fb3e541dafa21542375a75345f22117ce0ea82933add04e0ae5f79de2",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "dog-1",
+      "title": "Dog bark 1",
+      "category": "Dogs",
+      "kind": "effect",
+      "file": "dog-1.m4a",
+      "duration": 3.019,
+      "source": "dog-recording",
+      "sha256": "f9a259bd70927bd43f09c51778ab277881cbba3ec5b7101fb3742f8cea441544",
+      "modifications": "AAC conversion, level matching, edge fades; excerpt"
+    },
+    {
+      "id": "dog-2",
+      "title": "Dog bark 2",
+      "category": "Dogs",
+      "kind": "effect",
+      "file": "dog-2.m4a",
+      "duration": 3.019,
+      "source": "dog-recording",
+      "sha256": "0092760f588792576e1b35b16abbecfca2cf72ec052eec01d18a33a48cc8dc2b",
+      "modifications": "AAC conversion, level matching, edge fades; excerpt"
+    },
+    {
+      "id": "dog-3",
+      "title": "Dog bark 3",
+      "category": "Dogs",
+      "kind": "effect",
+      "file": "dog-3.m4a",
+      "duration": 3.019,
+      "source": "dog-recording",
+      "sha256": "1f59f67957731656125b0bd0817b1d1ee45494b4447d3563a194c796dbc03e17",
+      "modifications": "AAC conversion, level matching, edge fades; excerpt"
+    },
+    {
+      "id": "success",
+      "title": "Decision confirmed",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "success.m4a",
+      "duration": 0.557,
+      "source": "interface",
+      "sha256": "a86b9856c51837ac468af172e1f3fab4e085a4cd62518b566ce3caa53bef369e",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "warning",
+      "title": "Attention needed",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "warning.m4a",
+      "duration": 0.119,
+      "source": "interface",
+      "sha256": "1cf9ef389e36cb6f599169e676b7b4f61ff5b08cce0e0173bc94e9ae130034a2",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "payment",
+      "title": "Payment received",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "payment.m4a",
+      "duration": 0.142,
+      "source": "interface",
+      "sha256": "b9e98cf0e31ee5fcde425579a56f4457370d205bca4fa7772fea7c6358709d76",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "enquiry",
+      "title": "New enquiry",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "enquiry.m4a",
+      "duration": 0.348,
+      "source": "interface",
+      "sha256": "c442f8f49cd107e06e9de3d10674183cde971743a7690f0709da574460b78578",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "inspection",
+      "title": "Inspection decision",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "inspection.m4a",
+      "duration": 0.511,
+      "source": "interface",
+      "sha256": "5454d7ec40a187f77e42f4a1e440b79aa2bdab84d0c1b61e60b227b3bf3a6210",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "office",
+      "title": "Office message",
+      "category": "Office",
+      "kind": "effect",
+      "file": "office.m4a",
+      "duration": 0.398,
+      "source": "interface",
+      "sha256": "57e870b6a6f4d158984baccad81feed0b81ffb8fd0aaa300c45b125c55b3dde2",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "construction",
+      "title": "Construction completed",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "construction.m4a",
+      "duration": 0.351,
+      "source": "impact",
+      "sha256": "5cb1cb442148e2f51f834dac2d861fbebae14ac6c42a4c33036781ac6a1dd490",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "gate",
+      "title": "Gate latch",
+      "category": "Gameplay",
+      "kind": "effect",
+      "file": "gate.m4a",
+      "duration": 0.235,
+      "source": "impact",
+      "sha256": "4050ce7757ff405b4773af7a7ad7fcb25770497c0392f1c48fb8cb29c6792355",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "footsteps",
+      "title": "Customer footsteps",
+      "category": "Customers",
+      "kind": "effect",
+      "file": "footsteps.m4a",
+      "duration": 0.119,
+      "source": "impact",
+      "sha256": "dbd0558a248193684e716997bcc664472fac9fb4cab4532d67d0b06810b41daa",
+      "modifications": "AAC conversion, level matching, edge fades"
+    },
+    {
+      "id": "care-movement",
+      "title": "Movement in the care room",
+      "category": "Dogs",
+      "kind": "effect",
+      "file": "care-movement.m4a",
+      "duration": 0.142,
+      "source": "impact",
+      "sha256": "6047206aa268253b3ff9fc855a990a5c0afa1702e7ca139a828200d3b6a372fa",
+      "modifications": "AAC conversion, level matching, edge fades"
+    }
+  ],
+  "sources": [
+    {
+      "id": "music-town",
+      "title": "Hot Springs Town",
+      "author": "Kistol",
+      "page": "https://opengameart.org/content/hot-springs-town",
+      "url": "https://opengameart.org/sites/default/files/hot_spring_town.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "da33a9f057c759f35b19c5cd737cc59ce44d9b272b1b6c8ada4605fa1ece2a69"
+    },
+    {
+      "id": "music-running",
+      "title": "Slowly Running",
+      "author": "Game_assets_66",
+      "page": "https://opengameart.org/content/slowly-running",
+      "url": "https://opengameart.org/sites/default/files/Slowly%20running%20mp3.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "207e5e4d380d82939644a6492a73455c888488c229e74cd3aa96ff129a4d81fd"
+    },
+    {
+      "id": "music-revelation",
+      "title": "Revelation",
+      "author": "Indieteur",
+      "page": "https://opengameart.org/content/revelation",
+      "url": "https://opengameart.org/sites/default/files/Revelation_0.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "b6111a64fa948e76b01d08fc5de53177885a8d8db0dea65330946760892feb43"
+    },
+    {
+      "id": "music-meadow",
+      "title": "Happy moments (1.4)",
+      "author": "Centurion_of_war",
+      "page": "https://opengameart.org/content/happy-moments",
+      "url": "https://opengameart.org/sites/default/files/piano1.4_0.ogg",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "c8a94e9bc928e6701784c6533a467392f7fee7490c53c65766401a71e5d5b496"
+    },
+    {
+      "id": "music-new-day",
+      "title": "A New Day",
+      "author": "SpiderDave",
+      "page": "https://opengameart.org/content/a-new-day",
+      "url": "https://opengameart.org/sites/default/files/49_0.ogg",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "745348a59e54b68137c16f3217a37438b5505338460837ff9ffcd60a425829e4"
+    },
+    {
+      "id": "music-happy",
+      "title": "Happy",
+      "author": "Alex McCulloch (Pro Sensory)",
+      "page": "https://opengameart.org/content/happy",
+      "url": "https://opengameart.org/sites/default/files/happy_song_1_0.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "f0ea8b0f4aabb82862bdfc4cdc4c00d65e64f1ec1571b3f78568240f295ba673"
+    },
+    {
+      "id": "office-room",
+      "title": "The Office",
+      "author": "Iwan 'qubodup' Gabovitch",
+      "page": "https://freesound.org/people/qubodup/sounds/211945/",
+      "url": "https://cdn.freesound.org/previews/211/211945_71257-hq.mp3",
+      "license": "CC-BY-3.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceSHA256": "67d18ebf3b2e910ee585a5d249a37eb88cdb92af5bb3d806b42807390ee7ac58"
+    },
+    {
+      "id": "outdoor-garden",
+      "title": "Ambience near bird feeders",
+      "author": "BeeProductive",
+      "page": "https://freesound.org/people/BeeProductive/sounds/378379/",
+      "url": "https://cdn.freesound.org/previews/378/378379_4298084-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "9491d44809d96952d5e36aa11132ac29aedcb9aed8d0ec63815bb30681600e5e"
+    },
+    {
+      "id": "outdoor-rain",
+      "title": "Rain and birds",
+      "author": "FenrirFangs",
+      "page": "https://freesound.org/people/FenrirFangs/sounds/231685/",
+      "url": "https://cdn.freesound.org/previews/231/231685_3635427-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "54cdd0defb76bbb05532f3c794e7a4165c1fd5774735b2d5e20342dae5c74d6d"
+    },
+    {
+      "id": "dog-recording",
+      "title": "Barking Aldi Dog",
+      "author": "qubodup",
+      "page": "https://freesound.org/people/qubodup/sounds/211607/",
+      "url": "https://cdn.freesound.org/previews/211/211607_71257-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "050fc2cc1547b8289bf966fb29783bac56afb83b2b6ff3e8f2c342722fdad083"
+    },
+    {
+      "id": "arrival",
+      "title": "Doorbell",
+      "author": "vdr3",
+      "page": "https://freesound.org/people/vdr3/sounds/393333/",
+      "url": "https://cdn.freesound.org/previews/393/393333_4994127-hq.mp3",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "aacfe2f0171aaeca2ff10df2e04b357983ca8e250a9a2cf396ee736b17f3d7b3"
+    },
+    {
+      "id": "interface",
+      "title": "Interface Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232"
+    },
+    {
+      "id": "impact",
+      "title": "Impact Sounds",
+      "author": "Kenney",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "license": "CC0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceSHA256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    }
+  ]
+}

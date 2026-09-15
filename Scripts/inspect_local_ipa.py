@@ -12,7 +12,7 @@ from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from local_sign import BUNDLES, TEAM, ROOT, check_profile, decode_profile, distribution_entitlements, validated_run
+from local_sign import BUNDLES, TEAM, ROOT, RELEASE, check_profile, decode_profile, distribution_entitlements, validated_run
 from macho_seals import check_bundle, signature_blobs, slices
 
 def native_sections(data):
@@ -60,7 +60,7 @@ def inspect(directory, evidence, openssl):
     receipt_path = directory / "local-signing.json"
     receipt = json.loads(receipt_path.read_bytes())
     run = validated_run(receipt["validatedRun"], evidence)
-    assert receipt["sourceRevision"] == run["head_sha"] and receipt["build"] == "1"
+    assert receipt["sourceRevision"] == run["head_sha"] and receipt["build"] == RELEASE["build"] and receipt["version"] == RELEASE["version"]
     ipa = directory / "PawBoss.ipa"
     assert hashlib.sha256(ipa.read_bytes()).hexdigest() == receipt["ipaSHA256"]
     certificate = directory / "distribution-certificate.pem"

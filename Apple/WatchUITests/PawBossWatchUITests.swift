@@ -53,4 +53,24 @@ final class PawBossWatchUITests: XCTestCase {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "watch-dog-care"; attachment.lifetime = .keepAlways; add(attachment)
     }
+    func testWatchAudioDefaultsAndPreviews() {
+        let app = launch(seed: true)
+        openMenu(app)
+        func reach(_ element: XCUIElement, attempts: Int = 14) {
+            for _ in 0..<attempts {
+                if element.exists && element.isHittable { return }
+                app.swipeUp(velocity: .slow)
+            }
+            XCTAssertTrue(element.isHittable)
+        }
+        let more = app.buttons["More"]; reach(more); more.tap()
+        let settings = app.buttons["Settings and Sync"]; reach(settings); settings.tap()
+        let music = app.sliders["volume-Music"]; reach(music)
+        XCTAssertTrue(String(describing: music.value ?? "").contains("50"))
+        let library = app.buttons["Sound Library"]; reach(library); library.tap()
+        XCTAssertTrue(app.buttons["stopAudioPreview"].waitForExistence(timeout: 5))
+        let preview = app.buttons["preview-music-town"]; reach(preview); preview.tap()
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "watch-audio-library"; attachment.lifetime = .keepAlways; add(attachment)
+    }
 }

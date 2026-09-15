@@ -13,15 +13,17 @@ struct SettingsView: View {
                 Toggle("Haptics", isOn: $store.preferences.haptics)
             }
             Section("Audio") {
-                ForEach(["Music", "Ambience", "Dogs", "Customers", "Office", "Gameplay"], id: \.self) { category in
+                ForEach(AudioMix.categories, id: \.self) { category in
                     VStack(alignment: .leading) {
-                        Text(category).font(.headline)
-                        Slider(value: Binding(get: { store.preferences.volumes[category, default: 0] }, set: { store.preferences.volumes[category] = $0; store.savePreferences() }), in: 0...1, step: 0.05)
+                        HStack { Text(category).font(.headline); Spacer(); Text("\(Int((AudioMix.gain(category, volumes: store.preferences.volumes) * 100).rounded()))%").monospacedDigit() }.accessibilityHidden(true)
+                        Slider(value: Binding(get: { AudioMix.gain(category, volumes: store.preferences.volumes) }, set: { store.preferences.volumes[category] = $0; store.savePreferences() }), in: 0...1, step: 0.05)
                             .accessibilityLabel("\(category) volume")
                             .accessibilityValue("\(Int((store.preferences.volumes[category, default: 0] * 100).rounded())) percent")
+                            .accessibilityIdentifier("volume-\(category)")
                     }
                 }
-                ForEach(FeedbackSound.allCases, id: \.rawValue) { sound in Button("Preview \(sound.title)", systemImage: "play.circle") { store.feedback.play(sound) } }
+                Button("Reset all volumes to 50 percent", systemImage: "arrow.counterclockwise") { store.preferences.volumes = AudioMix.defaults; store.savePreferences(); store.announce("All six volumes set to 50 percent.") }
+                NavigationLink("Sound Library", destination: SoundLibraryView())
             }
             Section("Notifications") {
                 Toggle("Business reminders", isOn: Binding(get: { store.preferences.notificationEnabled }, set: { enabled in
@@ -74,7 +76,7 @@ struct HelpView: View {
         ("Services and expansion", "Day care and half-days form the opening business. Specialist care needs trained staff and a quiet room. Grooming needs its own room, station and groomer; transport needs a vehicle and trained driver. Boarding requires space, training and approval. Planning and construction take game time. Growth still needs safe staffing and a cash reserve."),
         ("Apple Watch and offline actions", "The iPhone holds the authoritative business. Watch actions are saved in a local queue and confirmed by iPhone. A sleeping live connection does not mean background delivery has failed. Refresh Sync retries safely. If the day or business changed before an action arrives, it is rejected with a reason so it cannot affect the wrong care record."),
         ("Saving and reminders", "Meaningful changes save automatically before they appear as successful. A previous local backup is retained. Export saves from Settings on iPhone. The game does not advance while closed. Optional reminders point to unfinished records; they do not mean that real animals are awaiting care. iCloud backup is not enabled in this build."),
-        ("Audio and presentation", "Each audio category has its own volume and previews. Zero is silent. Audio is lowered while VoiceOver is enabled and never replaces written or spoken results. Appearance follows the system unless you choose Light or Dark. System Dynamic Type remains supported.")
+        ("Audio and presentation", "All six volume controls start at 50 percent, with the same levels whether VoiceOver is on or off. Zero is silent. Settings, Sound Library has separate previews; music and ambience previews last up to 15 seconds. Office sounds accompany administration, care-room sounds accompany dogs, and garden or rain recordings accompany the outdoor area. Music rotates through complete tracks without immediate repeats. Audio never replaces written or spoken results. Appearance follows the system unless you choose Light or Dark. System Dynamic Type remains supported.")
     ]
     var body: some View {
         List {
@@ -92,8 +94,43 @@ struct AboutView: View {
             Text("A Dog Day Care Simulation")
             ValueRow(title: "Version", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"))")
             Text("A personal project by Sidney Tambin.")
-            Text("Original game design: PawBoss Design Bible. Native Apple artwork generated for PawBoss. Audio created specifically for the game. System symbols and native controls by Apple.")
+            Text("Original game design: PawBoss Design Bible. Native Apple artwork generated for PawBoss. Recorded sound and music used under the licences listed in Audio Credits. System symbols and native controls by Apple.")
+            NavigationLink("Audio Credits", destination: AudioCreditsView())
             Text("All people, animals and businesses in the simulation are fictional. Financial, licensing and care systems are gameplay models, not professional advice.")
         }.listStyle(.plain).navigationTitle("About")
+    }
+}
+struct SoundLibraryView: View {
+    @EnvironmentObject private var store: BusinessStore
+    var body: some View {
+        List {
+            Button("Stop Preview", systemImage: "stop.circle") { store.feedback.stopPreview() }
+                .accessibilityIdentifier("stopAudioPreview")
+            ForEach(AudioMix.categories, id: \.self) { category in
+                Section(category) {
+                    ForEach(store.feedback.library.assets.filter { $0.category == category }) { asset in
+                        Button("Preview \(asset.title)", systemImage: "play.circle") { store.feedback.preview(asset.id) }
+                            .accessibilityIdentifier("preview-\(asset.id)")
+                            .accessibilityHint("Uses the \(category.lowercased()) volume. Stops any previous preview.")
+                    }
+                }
+            }
+            NavigationLink("Audio Credits", destination: AudioCreditsView())
+        }.listStyle(.plain).navigationTitle("Sound Library").onDisappear { store.feedback.stopPreview() }
+    }
+}
+struct AudioCreditsView: View {
+    private let library = AudioLibrary.bundled()
+    var body: some View {
+        List {
+            Text("Recordings converted to AAC, level matched and edge faded. Dog effects are excerpts. CC0 recordings are public-domain dedications; The Office is used under Creative Commons Attribution 3.0.")
+            ForEach(library.sources) { source in
+                Section(source.title) {
+                    Text(source.author)
+                    if let page = URL(string: source.page) { Link("Original recording: \(source.title)", destination: page) }
+                    if let licence = URL(string: source.licenseURL) { Link(source.license, destination: licence) }
+                }
+            }
+        }.listStyle(.plain).navigationTitle("Audio Credits")
     }
 }

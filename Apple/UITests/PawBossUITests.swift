@@ -137,4 +137,27 @@ final class PawBossUITests: XCTestCase {
         XCTAssertTrue(app.sliders.matching(NSPredicate(format: "label CONTAINS %@", "volume")).count > 0)
         screenshot("settings-audio", app: app)
     }
+    func testHalfVolumeAndIndividualSoundPreviews() {
+        let app = launch(seed: true)
+        app.tabBars.buttons["More"].tap(); app.buttons["Settings and Sync"].tap()
+        let music = app.sliders["volume-Music"]
+        for _ in 0..<5 {
+            if music.exists && music.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(music.exists)
+        XCTAssertTrue(String(describing: music.value ?? "").contains("50"))
+        music.adjust(toNormalizedSliderPosition: 0.8)
+        XCTAssertFalse(String(describing: music.value ?? "").contains("50"))
+        let library = app.buttons["Sound Library"]
+        for _ in 0..<8 {
+            if library.exists && library.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(library.isHittable); library.tap()
+        let preview = app.buttons["preview-music-town"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 5)); preview.tap()
+        XCTAssertTrue(app.buttons["stopAudioPreview"].exists); app.buttons["stopAudioPreview"].tap()
+        screenshot("individual-audio-library", app: app)
+    }
 }
