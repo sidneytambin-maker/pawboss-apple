@@ -42,9 +42,11 @@ final class PawBossWatchUITests: XCTestCase {
         let water = app.buttons["catalogue-water"]; reach(water, in: app); water.tap()
         let purchase = app.buttons["purchaseItem"]; reach(purchase, in: app)
         XCTAssertTrue(purchase.label.contains("Place")); purchase.tap()
-        let confirmation = app.buttons.matching(identifier: "confirmPurchase").firstMatch
+        // The native Watch action controller keeps the title, not the SwiftUI ID.
+        let confirmation = app.buttons.matching(identifier: "Confirm \u{00A3}10.00").firstMatch
         XCTAssertTrue(confirmation.waitForExistence(timeout: 5)); XCTAssertTrue(confirmation.isEnabled)
-        app.buttons.matching(identifier: "Cancel").firstMatch.tap()
+        app.buttons.matching(identifier: "AX_ActionContentControllerCancelButton").firstMatch.tap()
+        XCTAssertFalse(confirmation.exists)
         XCTAssertTrue(purchase.waitForExistence(timeout: 5))
     }
     func testWaitingStateHasRefreshNotFakeBusiness() {
